@@ -1,0 +1,14 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/heroes/:hero_id/missions"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: hero_id
+    value: "2272"
+    disabled: false
+    description: "(Required) "
+settings: {}
+examples: ./.resources/List Hero Missions.resources/examples
+order: 11000

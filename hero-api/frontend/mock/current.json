@@ -1,0 +1,22 @@
+{
+  "data": {
+    "location_id": 1,
+    "observed_at": "2026-10-21T03:00:00Z",
+    "temperature_c": 27.4,
+    "apparent_temperature_c": 29.8,
+    "humidity_pct": 78.0,
+    "wind_speed_kmh": 9.4,
+    "wind_direction_deg": 120.0,
+    "precipitation_mm": 0.0,
+    "weather_code": 2,
+    "is_day": true,
+    "pm2_5": 38.2,
+    "us_aqi": 108.0,
+    "aqi_category": "unhealthy_sensitive"
+  },
+  "meta": {
+    "generated_at": "2026-10-21T03:00:00Z",
+    "count": null,
+    "cached": false
+  }
+}

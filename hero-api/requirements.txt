@@ -1,0 +1,9 @@
+# Pin version để cả team chạy giống nhau. Nâng version → cập nhật file này trong PR riêng.
+fastapi[standard]==0.142.4
+sqlmodel==0.0.48
+pydantic-settings==2.15.0
+httpx==0.28.1
+pytest==9.1.1
+
+# GĐ2 (collector) — bỏ comment khi bắt đầu:
+# APScheduler>=3.10,<4

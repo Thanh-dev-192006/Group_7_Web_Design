@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Design tokens — đổi màu/khoảng cách ở ĐÂY, không hardcode trong component.
+   ========================================================================== */
+:root {
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --bg: #f3f6fa;
+    --surface: #ffffff;
+    --text: #172033;
+    --text-muted: #5b6678;
+    --border: #e1e7ef;
+    --primary: #1f5fbf;
+    --danger: #b42318;
+
+    --radius: 12px;
+    --shadow: 0 2px 12px rgb(19 38 74 / 8%);
+    --gap: 1rem;
+
+    /* Thang AQI US EPA — khớp app/services/aqi.py và js/aqi.js */
+    --aqi-good: #00e400;
+    --aqi-moderate: #ffff00;
+    --aqi-unhealthy-sensitive: #ff7e00;
+    --aqi-unhealthy: #ff0000;
+    --aqi-very-unhealthy: #8f3f97;
+    --aqi-hazardous: #7e0023;
+    --aqi-unknown: #b8c0cc;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1520;
+        --surface: #182131;
+        --text: #e6ebf2;
+        --text-muted: #9aa6b8;
+        --border: #2a3547;
+        --primary: #6ea0ff;
+        --danger: #ff8a7a;
+        --shadow: none;
+    }
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.5;
+}
+
+a { color: var(--primary); }
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+.app-header, .app-footer, .layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+.app-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem var(--gap);
+    padding-top: 1.25rem;
+}
+
+.app-title { margin: 0; font-size: 1.5rem; }
+.app-updated { margin: 0; color: var(--text-muted); font-size: .9rem; }
+
+.layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 380px) 1fr;
+    gap: var(--gap);
+    padding-block: var(--gap);
+}
+
+.content { display: grid; gap: var(--gap); align-content: start; min-width: 0; }
+
+.app-footer {
+    padding-block: 1rem 2rem;
+    color: var(--text-muted);
+    font-size: .85rem;
+}
+
+@media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: var(--gap);
+    min-width: 0;
+}
+
+.panel--sidebar { display: grid; gap: var(--gap); align-content: start; }
+.panel__title { margin: 0 0 .75rem; font-size: 1.05rem; }
+
+.field { display: grid; gap: .35rem; }
+.field__label { font-size: .85rem; color: var(--text-muted); }
+.field__input {
+    font: inherit;
+    padding: .55rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.map { height: 420px; border-radius: 8px; z-index: 0; }
+@media (max-width: 800px) { .map { height: 300px; } }
+
+/* AQI badge: thêm class aqi--<category> (xem js/aqi.js) */
+.aqi {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .15rem .6rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #111;
+    background: var(--aqi-unknown);
+}
+.aqi--good { background: var(--aqi-good); }
+.aqi--moderate { background: var(--aqi-moderate); }
+.aqi--unhealthy_sensitive { background: var(--aqi-unhealthy-sensitive); }
+.aqi--unhealthy { background: var(--aqi-unhealthy); color: #fff; }
+.aqi--very_unhealthy { background: var(--aqi-very-unhealthy); color: #fff; }
+.aqi--hazardous { background: var(--aqi-hazardous); color: #fff; }
+
+/* Thẻ thời tiết hiện tại */
+.current { display: grid; gap: .75rem; }
+.current__main { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.current__temp { font-size: 2.75rem; font-weight: 700; line-height: 1; }
+.current__desc { color: var(--text-muted); }
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: .5rem;
+    margin: 0;
+}
+.stats div { padding: .5rem; border: 1px solid var(--border); border-radius: 8px; }
+.stats dt { font-size: .8rem; color: var(--text-muted); }
+.stats dd { margin: 0; font-weight: 600; }
+
+/* ==========================================================================
+   States — mọi vùng dữ liệu dùng chung (xem js/ui.js)
+   ========================================================================== */
+.state { color: var(--text-muted); }
+.state--loading::before {
+    content: "";
+    display: inline-block;
+    width: 1em; height: 1em;
+    margin-right: .5rem;
+    vertical-align: -.15em;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+.state--error { color: var(--danger); }
+.state--empty { font-style: italic; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .state--loading::before { animation: none; }
+}

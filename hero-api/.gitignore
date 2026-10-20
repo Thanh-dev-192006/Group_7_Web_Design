@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+pytest-cache-files-*/
+
+# Dữ liệu & bí mật
+*.db
+*.db-shm
+*.db-wal
+.env
+
+# Công cụ cá nhân
+.vscode/
+.idea/
+.claude/
+.remember/
+.postman/

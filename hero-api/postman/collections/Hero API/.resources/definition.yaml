@@ -1,0 +1,4 @@
+$kind: collection
+description: REST API for heroes, teams, and missions.
+variables:
+  baseUrl: /

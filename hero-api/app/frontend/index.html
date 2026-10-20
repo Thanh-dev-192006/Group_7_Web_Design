@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero API Dashboard</title>
+    <style>
+        :root { font-family: system-ui, sans-serif; color: #172033; background: #f4f7fb; }
+        body { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+        form, .filters { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 2px 12px #13264a14; margin: 1rem 0; }
+        input, select, button { padding: .6rem; border: 1px solid #ccd5e3; border-radius: 7px; margin: .25rem; }
+        button { cursor: pointer; background: #173f91; color: white; border: 0; }
+        button.danger { background: #b42318; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th, td { padding: .75rem; text-align: left; border-bottom: 1px solid #e8edf4; }
+        .status { color: #176b3a; font-weight: 600; }
+        #message { min-height: 1.5rem; }
+    </style>
+</head>
+<body>
+    <header><h1>Hero API</h1><a href="http://127.0.0.1:8000/docs" target="_blank">Open API docs</a></header>
+    <p id="message" role="status"></p>
+    <form id="hero-form">
+        <h2>Add hero</h2>
+        <input name="name" placeholder="Name" required>
+        <input name="secret_name" placeholder="Secret name" required>
+        <input name="age" type="number" min="0" placeholder="Age">
+        <input name="power" placeholder="Power">
+        <button type="submit">Create hero</button>
+    </form>
+    <div class="filters">
+        <input id="search" placeholder="Search by name">
+        <select id="status"><option value="">All statuses</option><option value="active">Active</option><option value="retired">Retired</option></select>
+        <button id="refresh">Refresh</button>
+    </div>
+    <table><thead><tr><th>Name</th><th>Age</th><th>Power</th><th>Status</th><th>Actions</th></tr></thead><tbody id="heroes"></tbody></table>
+    <script src="app.js"></script>
+</body>
+</html>

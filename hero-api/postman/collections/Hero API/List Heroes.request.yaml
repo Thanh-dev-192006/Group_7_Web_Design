@@ -1,0 +1,16 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/heroes?offset=0&limit=10&min_age=9037&team_id=9037&name=string&status=retired"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  offset: "0"
+  limit: "10"
+  min_age: "9037"
+  team_id: "9037"
+  name: string
+  status: retired
+settings: {}
+examples: ./.resources/List Heroes.resources/examples
+order: 2000

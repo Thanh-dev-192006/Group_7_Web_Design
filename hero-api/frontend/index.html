@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời tiết &amp; AQI Việt Nam</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <h1 class="app-title">Thời tiết &amp; AQI</h1>
+        <p class="app-updated" id="updated-at" aria-live="polite"></p>
+    </header>
+
+    <main class="layout">
+        <!-- Cột trái: chọn địa điểm + bản đồ -->
+        <aside class="panel panel--sidebar">
+            <label class="field">
+                <span class="field__label">Địa điểm</span>
+                <select id="location-select" class="field__input" disabled>
+                    <option>Đang tải…</option>
+                </select>
+            </label>
+            <div id="map" class="map" role="region" aria-label="Bản đồ địa điểm"></div>
+        </aside>
+
+        <!-- Cột phải: dữ liệu của địa điểm đang chọn -->
+        <section class="content">
+            <article class="panel" aria-labelledby="current-title">
+                <h2 id="current-title" class="panel__title">Hiện tại</h2>
+                <div id="current" class="state state--empty">Chọn một địa điểm</div>
+            </article>
+
+            <article class="panel" aria-labelledby="hourly-title">
+                <h2 id="hourly-title" class="panel__title">48 giờ tới</h2>
+                <div id="hourly" class="state state--empty">Chọn một địa điểm</div>
+            </article>
+
+            <article class="panel" aria-labelledby="daily-title">
+                <h2 id="daily-title" class="panel__title">7 ngày tới</h2>
+                <div id="daily" class="state state--empty">Chọn một địa điểm</div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        Dữ liệu thời tiết và chất lượng không khí:
+        <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0)
+        · <a href="/docs" target="_blank" rel="noopener">Tài liệu API</a>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
