@@ -1,9 +1,0 @@
-$kind: http-request
-description: ""
-url: "{{baseUrl}}/teams"
-method: GET
-headers:
-  Accept: application/json
-settings: {}
-examples: ./.resources/List Teams.resources/examples
-order: 6000
