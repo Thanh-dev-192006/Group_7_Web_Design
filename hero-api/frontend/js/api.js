@@ -42,6 +42,9 @@ export const api = {
     getCurrent: (locationId) =>
         request(`/api/locations/${locationId}/current`, { mockFile: "current.json" }),
 
+    // Tóm tắt thời tiết + AQI của TẤT CẢ địa điểm (tô màu marker bản đồ). Backend: GET /api/current (issue B).
+    getCurrentAll: () => request("/api/current", { mockFile: "current-all.json" }),
+
     getForecast: (locationId, { hours = CONFIG.FORECAST_HOURS, days = CONFIG.FORECAST_DAYS } = {}) =>
         request(`/api/locations/${locationId}/forecast?hours=${hours}&days=${days}`, { mockFile: "forecast.json" }),
 };

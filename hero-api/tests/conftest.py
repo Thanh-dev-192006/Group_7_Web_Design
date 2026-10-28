@@ -38,13 +38,13 @@ class FakeWeatherService(WeatherService):
             aqi_category=category_from_us_aqi(85),
         )
 
-    def _build_forecast(self, location, *, hours, days):
+    def _build_forecast(self, location):
         self.calls += 1
         return Forecast(
             location_id=location.id,
-            hourly=[HourlyPoint(time=FIXED_TIME, temperature_c=28.0) for _ in range(hours)],
+            hourly=[HourlyPoint(time=FIXED_TIME, temperature_c=28.0) for _ in range(168)],
             daily=[DailyPoint(date=date(2026, 10, 21), temperature_max_c=31, temperature_min_c=24)
-                   for _ in range(days)],
+                   for _ in range(7)],
         )
 
 

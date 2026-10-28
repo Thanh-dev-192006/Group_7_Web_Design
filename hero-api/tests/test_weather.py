@@ -1,11 +1,7 @@
 """Test router thời tiết với FakeWeatherService (conftest.py).
 
-Khi làm xong `_build_current/_build_forecast` thật, thêm test riêng cho
-service bằng JSON Open-Meteo mẫu (lưu ở tests/fixtures/) — không gọi mạng.
+Test service thật (ghép dữ liệu Open-Meteo) nằm ở test_weather_service.py.
 """
-from app.errors import NotImplementedFeature
-from app.services.weather import WeatherService
-
 
 def test_current_returns_envelope_and_uses_cache(client, weather_service):
     first = client.get("/api/locations/1/current")
@@ -38,17 +34,14 @@ def test_weather_unknown_location_is_404(client):
     assert client.get("/api/locations/9999/current").json()["error"]["code"] == "LOCATION_NOT_FOUND"
 
 
-def test_unimplemented_service_returns_501(client):
-    """Khi service chưa làm xong, frontend nhận 501 rõ ràng thay vì 500.
-    XÓA test này khi đã triển khai _build_current/_build_forecast."""
-    from app.main import app
-    from app.services.weather import get_weather_service
+def test_forecast_days_above_7_is_400(client):
+    response = client.get("/api/locations/1/forecast", params={"days": 8})
+    assert response.status_code == 400
+    assert response.json()["error"]["details"][0]["field"] == "query.days"
 
-    class Stub(WeatherService):
-        def __init__(self):
-            super().__init__(client=object())
 
-    app.dependency_overrides[get_weather_service] = Stub
-    response = client.get("/api/locations/1/current")
-    assert response.status_code == 501
-    assert response.json()["error"]["code"] == NotImplementedFeature.code
+def test_forecast_different_params_share_one_cache_entry(client, weather_service):
+    client.get("/api/locations/1/forecast", params={"hours": 24, "days": 1})
+    second = client.get("/api/locations/1/forecast", params={"hours": 168, "days": 7})
+    assert second.json()["meta"]["cached"] is True
+    assert weather_service.calls == 1

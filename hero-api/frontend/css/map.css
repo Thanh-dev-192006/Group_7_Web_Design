@@ -1,0 +1,3 @@
+/* Style của bản đồ + legend AQI — CHỈ người phụ trách issue C sửa file này.
+   Dùng biến trong :root của style.css (--aqi-*, --surface, --border, --text...).
+   Tên class: .map-legend, .map-legend__item, .map-legend__swatch, .map-popup ... (BEM, tiền tố "map-"). */

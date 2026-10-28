@@ -11,5 +11,6 @@ export const CONFIG = {
     USE_MOCK: params.get("mock") === "1",
     FORECAST_HOURS: 48,
     FORECAST_DAYS: 7,
+    REFRESH_MINUTES: 10,            // làm mới thẻ hiện tại + màu marker (issue C)
     TIMEZONE: "Asia/Ho_Chi_Minh",   // API trả UTC, hiển thị theo giờ VN
 };

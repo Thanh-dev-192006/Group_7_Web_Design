@@ -46,7 +46,7 @@ hero-api/
 │   ├── routers/           # locations (mẫu), weather, health, deps dùng chung
 │   └── services/
 │       ├── open_meteo.py  # client HTTP gọi Open-Meteo
-│       ├── weather.py     # ghép dữ liệu → schema (TODO: _build_current/_build_forecast)
+│       ├── weather.py     # ghép dữ liệu → schema
 │       ├── cache.py       # TTLCache
 │       └── aqi.py         # phân mức AQI
 ├── collector/run.py       # GĐ2: thu thập định kỳ (chưa làm)
@@ -70,7 +70,7 @@ hero-api/
 |---|---|
 | `/api/locations`, `/api/health`, format lỗi, Swagger, test | ✅ Xong |
 | `/api/.../current`, `/forecast` — router, validate, cache | ✅ Xong |
-| `/api/.../current`, `/forecast` — lấy dữ liệu thật (`services/weather.py`) | ⬜ TODO → đang trả `501 NOT_IMPLEMENTED` |
+| `/api/.../current`, `/forecast` — lấy dữ liệu thật (`services/weather.py`) | ✅ Xong (test bằng payload giả; chưa thử gọi Open-Meteo thật cho 15 thành phố) |
 | Frontend: layout, chọn địa điểm, bản đồ, thẻ hiện tại, states | ✅ Khung xong |
 | Frontend: biểu đồ 48h, thẻ 7 ngày, màu marker theo AQI | ⬜ TODO |
 | GĐ2: collector, anomaly, lịch sử | ⬜ Chưa bắt đầu |

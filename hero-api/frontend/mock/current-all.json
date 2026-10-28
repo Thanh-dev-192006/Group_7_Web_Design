@@ -1,0 +1,144 @@
+{
+  "data": [
+    {
+      "location_id": 1,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 24.0,
+      "weather_code": 0,
+      "is_day": true,
+      "us_aqi": 42.0,
+      "aqi_category": "good"
+    },
+    {
+      "location_id": 2,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 25.3,
+      "weather_code": 1,
+      "is_day": true,
+      "us_aqi": 68.0,
+      "aqi_category": "moderate"
+    },
+    {
+      "location_id": 3,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 26.6,
+      "weather_code": 2,
+      "is_day": true,
+      "us_aqi": 95.0,
+      "aqi_category": "moderate"
+    },
+    {
+      "location_id": 4,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 27.9,
+      "weather_code": 3,
+      "is_day": true,
+      "us_aqi": 118.0,
+      "aqi_category": "unhealthy_sensitive"
+    },
+    {
+      "location_id": 5,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 29.2,
+      "weather_code": 61,
+      "is_day": true,
+      "us_aqi": 160.0,
+      "aqi_category": "unhealthy"
+    },
+    {
+      "location_id": 6,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 30.5,
+      "weather_code": 80,
+      "is_day": true,
+      "us_aqi": 205.0,
+      "aqi_category": "very_unhealthy"
+    },
+    {
+      "location_id": 7,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 31.8,
+      "weather_code": 95,
+      "is_day": true,
+      "us_aqi": 330.0,
+      "aqi_category": "hazardous"
+    },
+    {
+      "location_id": 8,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 24.0,
+      "weather_code": 0,
+      "is_day": true,
+      "us_aqi": 30.0,
+      "aqi_category": "good"
+    },
+    {
+      "location_id": 9,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 25.3,
+      "weather_code": 1,
+      "is_day": true,
+      "us_aqi": 77.0,
+      "aqi_category": "moderate"
+    },
+    {
+      "location_id": 10,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 26.6,
+      "weather_code": 2,
+      "is_day": true,
+      "us_aqi": 140.0,
+      "aqi_category": "unhealthy_sensitive"
+    },
+    {
+      "location_id": 11,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 27.9,
+      "weather_code": 3,
+      "is_day": true,
+      "us_aqi": 185.0,
+      "aqi_category": "unhealthy"
+    },
+    {
+      "location_id": 12,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 29.2,
+      "weather_code": 61,
+      "is_day": true,
+      "us_aqi": 55.0,
+      "aqi_category": "moderate"
+    },
+    {
+      "location_id": 13,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 30.5,
+      "weather_code": 80,
+      "is_day": true,
+      "us_aqi": 250.0,
+      "aqi_category": "very_unhealthy"
+    },
+    {
+      "location_id": 14,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 31.8,
+      "weather_code": 95,
+      "is_day": true,
+      "us_aqi": 110.0,
+      "aqi_category": "unhealthy_sensitive"
+    },
+    {
+      "location_id": 15,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 24.0,
+      "weather_code": 0,
+      "is_day": true,
+      "us_aqi": 88.0,
+      "aqi_category": "moderate"
+    }
+  ],
+  "meta": {
+    "generated_at": "2026-10-21T03:00:00Z",
+    "count": 15,
+    "cached": false
+  }
+}

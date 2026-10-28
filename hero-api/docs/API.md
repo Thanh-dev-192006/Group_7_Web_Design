@@ -66,7 +66,7 @@ Thời tiết + AQI hiện tại. Cache 15 phút (`meta.cached = true` nếu l�
 | Query | Mặc định | Giới hạn |
 |---|---|---|
 | `hours` | 48 | 1–168 |
-| `days` | 7 | 1–16 |
+| `days` | 7 | 1–7 |
 
 ```json
 {
@@ -85,7 +85,11 @@ Thời tiết + AQI hiện tại. Cache 15 phút (`meta.cached = true` nếu l�
 }
 ```
 
-Dự báo chất lượng không khí của Open-Meteo chỉ có khoảng 5–7 ngày → các giờ xa hơn có `pm2_5`, `us_aqi`, `aqi_category` là `null`.
+Ghi chú:
+- Dữ liệu bắt đầu từ **giờ hiện tại** (UTC, làm tròn xuống giờ). `hours` tối đa 168 = 7 ngày, nên `days` cũng tối đa 7 (Air Quality API của Open-Meteo chỉ dự báo được ~7 ngày).
+- Mọi tổ hợp `hours`/`days` dùng chung một bản cache (15 phút) theo địa điểm.
+- Nếu Air Quality API lỗi hoặc ngắn hơn dự báo thời tiết, các giờ tương ứng có `pm2_5`, `us_aqi`, `aqi_category` là `null` (thời tiết vẫn trả bình thường). `current` cũng vậy.
+- `daily[].date` là ngày theo **UTC**; ngày Việt Nam (UTC+7) bắt đầu lúc 17:00 UTC hôm trước, nên các giờ cuối ngày có thể thuộc `date` kế tiếp khi so với giờ VN.
 
 ### `GET /api/health`
 

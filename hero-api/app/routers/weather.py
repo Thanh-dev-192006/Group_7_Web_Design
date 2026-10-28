@@ -35,7 +35,7 @@ def forecast(
     location: LocationDep,
     service: WeatherServiceDep,
     hours: int = Query(default=48, ge=1, le=168, description="Số giờ dự báo tính từ hiện tại"),
-    days: int = Query(default=7, ge=1, le=16, description="Số ngày dự báo"),
+    days: int = Query(default=7, ge=1, le=7, description="Số ngày dự báo (tối đa 7)"),
 ):
     data, cached = service.forecast(location, hours=hours, days=days)
     return Envelope(data=data, meta=Meta(cached=cached))

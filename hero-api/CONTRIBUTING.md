@@ -2,18 +2,20 @@
 
 ## Chia việc đề xuất
 
+> **Issue chi tiết cho từng vai (B, C, D, và GĐ2) nằm ở [`docs/issues/`](docs/issues/README.md)** — mỗi file tự chứa quy ước đặt tên/vị trí file; copy đúng file của mình cho Agent.
+
 Chia theo **file/thư mục** để hạn chế conflict. Nhóm tự gán tên vào bảng.
 
 | Vai trò | Thành viên | Phụ trách | File chính |
 |---|---|---|---|
-| **A — Dữ liệu backend** | | Gọi Open-Meteo, chuẩn hóa → `CurrentWeather` / `Forecast`, test service bằng JSON mẫu | `app/services/weather.py`, `app/services/open_meteo.py`, `tests/test_weather_service.py`, `tests/fixtures/` |
+| **A — Dữ liệu backend** | | Gọi Open-Meteo, chuẩn hóa → `CurrentWeather` / `Forecast`, test service bằng JSON mẫu | `app/services/weather.py`, `app/services/open_meteo.py`, `tests/test_weather_service.py` |
 | **B — API & tài liệu** | | Giữ hợp đồng API, Swagger (summary/ví dụ), test router, health; GĐ2: endpoint readings/anomalies | `app/routers/*`, `app/schemas.py`, `app/errors.py`, `docs/API.md`, `tests/` |
 | **C — Frontend: layout & bản đồ** | | Layout, CSS, responsive, dark mode, bản đồ + màu marker AQI, chọn địa điểm | `frontend/index.html`, `frontend/css/`, `components/map.js`, `components/location-picker.js` |
 | **D — Frontend: dữ liệu & GĐ2** | | Biểu đồ 48h, thẻ 7 ngày, thẻ hiện tại; sau đó collector + anomaly (GĐ2) | `components/hourly-chart.js`, `components/daily-list.js`, `components/current-card.js`, `collector/` |
 
 Thứ tự phụ thuộc: **không ai phải chờ ai**.
 - Frontend làm với `?mock=1` (dữ liệu trong `frontend/mock/`) cho đến khi A xong.
-- A làm xong thì bỏ test `test_unimplemented_service_returns_501` và frontend tự chạy với dữ liệu thật.
+- Backend lấy dữ liệu thật đã xong (A); frontend bỏ `?mock=1` là chạy với dữ liệu thật.
 
 ## Quy tắc vàng
 
@@ -43,7 +45,7 @@ Commit message: `<loại>(<phạm vi>): <mô tả ngắn>` — loại: `feat`, `
 - Route viết `def` (không `async def`) — SQLite và httpx client đang dùng đều đồng bộ.
 - Không hardcode URL/thời gian/ngưỡng: đưa vào `app/config.py`.
 - Datetime luôn UTC; giá trị thiếu là `None`.
-- Test mới không được gọi mạng thật: mock bằng `FakeWeatherService` (router) hoặc JSON mẫu + `httpx.MockTransport` (service).
+- Test mới không được gọi mạng thật: mock bằng `FakeWeatherService` (router) hoặc payload giả + `httpx.MockTransport` (service, xem `tests/test_weather_service.py`).
 
 ### Frontend
 - Chỉ gọi API qua `js/api.js`.
