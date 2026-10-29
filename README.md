@@ -56,7 +56,7 @@ Yêu cầu môi trường: **Python 3.12+**.
 ### 1. Khởi tạo môi trường và cài đặt dependencies
 
 ```powershell
-cd hero-api
+cd environmental-system
 python -m venv .venv
 .venv\Scripts\activate            # Trên macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt

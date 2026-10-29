@@ -1,0 +1,57 @@
+/* Biểu đồ 48 giờ, thẻ dự báo 7 ngày và icon thời tiết (issue D). */
+.chart {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    min-width: 0;
+}
+.chart canvas { display: block; max-width: 100%; }
+
+.daily {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .6rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.daily__item {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: .45rem;
+    padding: .75rem .4rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    text-align: center;
+    scroll-snap-align: start;
+}
+.daily__day { color: var(--text-muted); font-size: .82rem; font-weight: 600; }
+.daily__icon { font-size: 1.8rem; line-height: 1.3; }
+.daily__desc { min-height: 2.5em; font-size: .78rem; overflow-wrap: anywhere; }
+.daily__temps { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; }
+.daily__temps strong { font-size: 1rem; }
+.daily__temps > span { color: var(--text-muted); }
+.daily__rain { display: inline-flex; align-items: center; gap: .25rem; color: var(--text-muted); font-size: .82rem; }
+.daily__rain-icon { color: var(--primary); }
+.current__icon { display: inline-flex; align-items: center; font-size: 2.25rem; line-height: 1; }
+
+@media (max-width: 800px) {
+    .chart { height: 220px; }
+    .daily {
+        grid-auto-columns: minmax(108px, 1fr);
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        overflow-x: auto;
+        padding: .1rem .1rem .6rem;
+        scroll-snap-type: x mandatory;
+        overscroll-behavior-inline: contain;
+    }
+    .daily__item { min-height: 160px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .daily { scroll-behavior: auto; }
+}

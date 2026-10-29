@@ -1,4 +1,0 @@
-/* Style của biểu đồ 48h, thẻ 7 ngày, icon thời tiết — CHỈ người phụ trách issue D sửa file này.
-   Dùng biến trong :root của style.css (--surface, --border, --text-muted, --primary...).
-   Tên class (BEM): .chart..., .daily, .daily__item, .daily__day, .daily__icon, .daily__desc,
-   .daily__temps, .daily__rain, .current__icon */

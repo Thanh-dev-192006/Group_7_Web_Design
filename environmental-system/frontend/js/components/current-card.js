@@ -3,6 +3,7 @@
 import { aqiBadge } from "../aqi.js";
 import { fmt, weatherText } from "../format.js";
 import { el, setState } from "../ui.js";
+import { weatherIcon } from "../weather-icons.js";
 
 export function renderCurrent(container, current) {
     setState(container, "ready");
@@ -18,6 +19,7 @@ export function renderCurrent(container, current) {
     container.append(
         el("div", { className: "current" },
             el("div", { className: "current__main" },
+                el("span", { className: "current__icon", ariaHidden: "true" }, weatherIcon(current.weather_code, current.is_day)),
                 el("span", { className: "current__temp" }, fmt.num(current.temperature_c, "°C")),
                 el("span", { className: "current__desc" }, weatherText(current.weather_code)),
                 aqiBadge(current.us_aqi, current.aqi_category),
