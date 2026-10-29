@@ -146,3 +146,11 @@ createMap(container, locations, { onSelect }) -> { select(id), setMarkerAqi(id, 
 
 ## 6. Ngoài phạm vi
 Biểu đồ 48h, thẻ 7 ngày, icon thời tiết (D); endpoint backend (B); ô tìm kiếm địa điểm; chế độ bản đồ nhiệt (heatmap layer).
+
+## 7. Ghi chú triển khai và kiểm tra
+
+- Đã triển khai màu và tooltip cho toàn bộ marker, legend 6 mức AQI + không có dữ liệu, thao tác marker bằng Enter/Space và nhãn cho trình đọc màn hình.
+- Tự làm mới thẻ hiện tại và bản tóm tắt marker mỗi 10 phút; bỏ qua tab ẩn, không chồng request cùng loại, không tải lại forecast và giữ dữ liệu cũ khi lỗi mạng. Phản hồi của địa điểm đã bỏ chọn không ghi đè thẻ hiện tại.
+- CSS chuyển sidebar xuống dưới nội dung ở ≤800px; style bản đồ nằm trong `map.css`. Bổ sung metadata, favicon, noscript và trạng thái lỗi/rỗng khi không tải được danh sách địa điểm.
+- Đã kiểm tra logic bằng Node.js với DOM/Leaflet/API giả lập: 15 marker, đủ 7 dòng legend, AQI null/0, dữ liệu rỗng, thiếu Leaflet, thao tác bàn phím, làm mới nền, đổi địa điểm nhanh và lỗi mạng. Đã tính tương phản chữ muted trên nền light/dark và chữ trên cả 6 badge: đều ≥4.5:1.
+- Cần kiểm tra trực quan ở 390px/768px/1280px, chụp ảnh light/dark và thử API thật khi có môi trường chạy backend/trình duyệt. Phiên triển khai chưa thực hiện được các bước này do lệnh python trỏ tới alias WindowsApps không chạy được, launcher py không nhận diện các bản cài đặt và công cụ trình duyệt không kết nối được. Kiểm tra lại đã xác nhận Python 3.12.10 chạy được bằng đường dẫn đầy đủ C:\Users\Acer\AppData\Local\Programs\Python\Python312\python.exe.

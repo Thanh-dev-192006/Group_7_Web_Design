@@ -1,3 +1,27 @@
 /* Style của bản đồ + legend AQI — CHỈ người phụ trách issue C sửa file này.
    Dùng biến trong :root của style.css (--aqi-*, --surface, --border, --text...).
    Tên class: .map-legend, .map-legend__item, .map-legend__swatch, .map-popup ... (BEM, tiền tố "map-"). */
+
+.map { height: 420px; min-width: 0; border-radius: 8px; z-index: 0; background: var(--bg); font-family: var(--font); }
+.map-legend {
+    padding: .6rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    font: .75rem/1.5 var(--font);
+    max-width: calc(100% - 20px);
+}
+.map-legend__title { margin: 0 0 .3rem; font-size: .85rem; }
+.map-legend__item { display: flex; align-items: center; gap: .45rem; }
+.map-legend__swatch { flex: 0 0 .8rem; height: .8rem; border: 1px solid var(--text-muted); border-radius: 2px; }
+.map .leaflet-tooltip { background: var(--surface); color: var(--text); border-color: var(--border); font-family: var(--font); }
+.map .leaflet-tooltip-left::before { border-left-color: var(--border); }
+.map .leaflet-tooltip-right::before { border-right-color: var(--border); }
+.map .leaflet-bar a { background: var(--surface); color: var(--text); border-color: var(--border); }
+.map .leaflet-bar a:hover { background: var(--bg); }
+.map .leaflet-control-attribution { background: var(--surface); color: var(--text-muted); }
+.map .leaflet-control-attribution a { color: var(--primary); }
+.map .leaflet-interactive:focus-visible { stroke: var(--primary); stroke-width: 4; }
+@media (max-width: 800px) { .map { height: 300px; } }

@@ -22,9 +22,45 @@ const views = {
 
 let mapView = null;
 let requestSeq = 0;   // bỏ qua response cũ khi người dùng đổi địa điểm liên tục
+let selectedLocationId = null;
+let currentRefreshPending = false;
+let markersRefreshPending = false;
+
+async function refreshMarkers() {
+    if (markersRefreshPending) return;
+    markersRefreshPending = true;
+    try {
+        const response = await api.getCurrentAll();
+        mapView?.setAllMarkers(response.data);
+    } catch (error) {
+        console.warn("Không làm mới được màu AQI trên bản đồ.", error);
+    } finally {
+        markersRefreshPending = false;
+    }
+}
+
+async function refreshCurrent() {
+    if (currentRefreshPending || selectedLocationId == null) return;
+    const locationId = selectedLocationId;
+    const seq = requestSeq;
+    currentRefreshPending = true;
+    try {
+        const response = await api.getCurrent(locationId);
+        if (seq !== requestSeq) return;
+        renderCurrent(views.current, response.data);
+        mapView?.setMarkerAqi(locationId, response.data.aqi_category);
+        views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(response.meta.generated_at)}`;
+    } catch (error) {
+        console.warn("Không làm mới được thời tiết hiện tại.", error);
+    } finally {
+        currentRefreshPending = false;
+    }
+}
 
 async function selectLocation(locationId) {
     const seq = ++requestSeq;
+    selectedLocationId = locationId;
+    views.updatedAt.textContent = CONFIG.USE_MOCK ? "Chế độ dữ liệu mẫu (mock)" : "";
     views.select.value = String(locationId);
     mapView?.select(locationId);
     for (const view of [views.current, views.hourly, views.daily]) setState(view, "loading");
@@ -62,18 +98,31 @@ async function init() {
         locations = (await api.getLocations()).data;
     } catch (error) {
         views.select.replaceChildren(new Option("Không tải được địa điểm"));
-        setState(views.current, "error", errorMessage(error));
+        for (const view of [views.current, views.hourly, views.daily, views.map]) {
+            setState(view, "error", errorMessage(error));
+        }
+        views.map.classList.add("map");
         return;
     }
     if (!locations.length) {
-        setState(views.current, "empty", "Chưa có địa điểm nào");
+        views.select.replaceChildren(new Option("Chưa có địa điểm nào"));
+        for (const view of [views.current, views.hourly, views.daily, views.map]) {
+            setState(view, "empty", "Chưa có địa điểm nào");
+        }
+        views.map.classList.add("map");
         return;
     }
 
     const firstId = locations[0].id;
     renderLocationPicker(views.select, locations, { selectedId: firstId, onChange: selectLocation });
     mapView = createMap(views.map, locations, { onSelect: selectLocation });
+    void refreshMarkers();
     await selectLocation(firstId);
+    setInterval(() => {
+        if (document.hidden) return;
+        void refreshCurrent();
+        void refreshMarkers();
+    }, CONFIG.REFRESH_MINUTES * 60 * 1000);
 }
 
 init();
