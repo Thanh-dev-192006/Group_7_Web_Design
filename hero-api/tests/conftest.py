@@ -26,11 +26,16 @@ FIXED_TIME = datetime(2026, 10, 21, 3, 0, tzinfo=timezone.utc)
 class FakeWeatherService(WeatherService):
     """Giữ nguyên logic cache của WeatherService, chỉ thay phần lấy dữ liệu."""
 
-    def __init__(self):
+    def __init__(self, fail_for: dict[int | None, Exception] | None = None):
         super().__init__(client=object(), cache=TTLCache(ttl_seconds=60))
         self.calls = 0
+        self.fail_for: dict[int | None, Exception] = fail_for or {}
 
     def _build_current(self, location):
+        if location.id in self.fail_for:
+            raise self.fail_for[location.id]
+        if None in self.fail_for:
+            raise self.fail_for[None]
         self.calls += 1
         return CurrentWeather(
             location_id=location.id, observed_at=FIXED_TIME,
@@ -39,6 +44,10 @@ class FakeWeatherService(WeatherService):
         )
 
     def _build_forecast(self, location):
+        if location.id in self.fail_for:
+            raise self.fail_for[location.id]
+        if None in self.fail_for:
+            raise self.fail_for[None]
         self.calls += 1
         return Forecast(
             location_id=location.id,
