@@ -1,9 +1,9 @@
-# Pin version để cả team chạy giống nhau. Nâng version → cập nhật file này trong PR riêng.
+# Pin versions so the team uses the same dependencies.
 fastapi[standard]==0.142.4
 sqlmodel==0.0.48
 pydantic-settings==2.15.0
 httpx==0.28.1
 pytest==9.1.1
 
-# GĐ2 (collector) — bỏ comment khi bắt đầu:
+# Phase 2 (collector) - uncomment when development starts:
 # APScheduler>=3.10,<4
