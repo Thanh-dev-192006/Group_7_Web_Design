@@ -12,7 +12,12 @@ router = APIRouter(prefix="/api", tags=["system"])
 logger = logging.getLogger(__name__)
 
 
-@router.get("/health", response_model=Envelope[Health], summary="Trạng thái hệ thống")
+@router.get(
+    "/health",
+    response_model=Envelope[Health],
+    summary="Trạng thái hệ thống",
+    description="Kiểm tra trạng thái kết nối cơ sở dữ liệu và số lượng bản ghi đang cache.",
+)
 def health(session: SessionDep, service: WeatherServiceDep):
     try:
         session.exec(text("SELECT 1"))

@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/locations", tags=["locations"])
     "",
     response_model=Envelope[list[LocationOut]],
     summary="Danh sách địa điểm",
+    description="Danh sách các địa điểm hỗ trợ kèm tọa độ và vùng miền (lọc tùy chọn qua query region: north, central, south).",
     responses=error_responses(400),
 )
 def list_locations(
@@ -36,6 +37,7 @@ def list_locations(
     "/{location_id}",
     response_model=Envelope[LocationOut],
     summary="Chi tiết một địa điểm",
+    description="Chi tiết một địa điểm theo ID (tên, slug, tọa độ, vùng miền).",
     responses=error_responses(400, 404),
 )
 def read_location(location: LocationDep):

@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # Cache kết quả gọi Open-Meteo (giây)
     cache_ttl_seconds: int = 900
 
+    # Số worker chạy song song khi lấy tóm tắt mọi địa điểm (/api/current)
+    overview_max_workers: int = 8
+
     # Chỉ cần khi chạy frontend ở port khác (VD Live Server 5500).
     # Mặc định frontend do FastAPI phục vụ cùng origin nên để trống.
     # VD trong .env: CORS_ORIGINS=["http://localhost:5500","http://127.0.0.1:5500"]

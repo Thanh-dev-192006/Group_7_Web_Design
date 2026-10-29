@@ -42,6 +42,18 @@ class Envelope(BaseModel, Generic[T]):
 
 
 class ErrorBody(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "code": "LOCATION_NOT_FOUND",
+                    "message": "Location 99 does not exist",
+                    "details": None,
+                }
+            ]
+        }
+    )
+
     code: str = Field(examples=["LOCATION_NOT_FOUND"])
     message: str = Field(examples=["Location 99 does not exist"])
     details: list[dict] | None = None
@@ -65,7 +77,21 @@ class AqiCategory(str, Enum):
 
 # ---------- Locations ----------
 class LocationOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": 1,
+                    "name": "Hà Nội",
+                    "slug": "ha-noi",
+                    "region": "north",
+                    "lat": 21.0285,
+                    "lon": 105.8542,
+                }
+            ]
+        },
+    )
 
     id: int
     name: str
@@ -78,6 +104,28 @@ class LocationOut(BaseModel):
 # ---------- Weather ----------
 class CurrentWeather(BaseModel):
     """Thời tiết + AQI hiện tại của một địa điểm. Giá trị thiếu là null."""
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "location_id": 1,
+                    "observed_at": "2026-10-21T03:00:00Z",
+                    "temperature_c": 27.4,
+                    "apparent_temperature_c": 29.8,
+                    "humidity_pct": 78.0,
+                    "wind_speed_kmh": 9.4,
+                    "wind_direction_deg": 120.0,
+                    "precipitation_mm": 0.0,
+                    "weather_code": 2,
+                    "is_day": True,
+                    "pm2_5": 38.2,
+                    "us_aqi": 108.0,
+                    "aqi_category": "unhealthy_sensitive",
+                }
+            ]
+        }
+    )
+
     location_id: int
     observed_at: UTCDatetime
     temperature_c: float | None = None
@@ -89,6 +137,33 @@ class CurrentWeather(BaseModel):
     weather_code: int | None = Field(default=None, description="Mã thời tiết WMO")
     is_day: bool | None = None
     pm2_5: float | None = Field(default=None, description="µg/m³")
+    us_aqi: float | None = None
+    aqi_category: AqiCategory | None = None
+
+
+class CurrentSummary(BaseModel):
+    """Tóm tắt thời tiết + AQI một địa điểm (dùng tô màu bản đồ). Giá trị thiếu là null."""
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "location_id": 1,
+                    "observed_at": "2026-10-21T03:00:00Z",
+                    "temperature_c": 27.4,
+                    "weather_code": 2,
+                    "is_day": True,
+                    "us_aqi": 108.0,
+                    "aqi_category": "unhealthy_sensitive",
+                }
+            ]
+        }
+    )
+
+    location_id: int
+    observed_at: UTCDatetime
+    temperature_c: float | None = None
+    weather_code: int | None = Field(default=None, description="Mã thời tiết WMO")
+    is_day: bool | None = None
     us_aqi: float | None = None
     aqi_category: AqiCategory | None = None
 
@@ -114,6 +189,38 @@ class DailyPoint(BaseModel):
 
 
 class Forecast(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "location_id": 1,
+                    "hourly": [
+                        {
+                            "time": "2026-10-21T03:00:00Z",
+                            "temperature_c": 25.9,
+                            "precipitation_probability_pct": 0.0,
+                            "precipitation_mm": 0.0,
+                            "weather_code": 1,
+                            "pm2_5": 24.1,
+                            "us_aqi": 69.0,
+                            "aqi_category": "moderate",
+                        }
+                    ],
+                    "daily": [
+                        {
+                            "date": "2026-10-21",
+                            "temperature_max_c": 31.0,
+                            "temperature_min_c": 23.0,
+                            "precipitation_sum_mm": 1.2,
+                            "precipitation_probability_max_pct": 60.0,
+                            "weather_code": 61,
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+
     location_id: int
     hourly: list[HourlyPoint]
     daily: list[DailyPoint]
@@ -121,6 +228,19 @@ class Forecast(BaseModel):
 
 # ---------- Health ----------
 class Health(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "ok",
+                    "version": "0.1.0",
+                    "database": "ok",
+                    "cache_entries": 3,
+                }
+            ]
+        }
+    )
+
     status: str = Field(examples=["ok"])
     version: str
     database: str = Field(examples=["ok"])

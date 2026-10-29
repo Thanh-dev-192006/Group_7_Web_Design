@@ -51,11 +51,29 @@ def test_health(client):
     assert body["data"]["database"] == "ok"
 
 
+def test_health_cache_entries_increases_after_current(client):
+    initial = client.get("/api/health").json()["data"]["cache_entries"]
+    client.get("/api/locations/1/current")
+    updated = client.get("/api/health").json()["data"]["cache_entries"]
+    assert updated == initial + 1
+
+
 def test_openapi_documents_400_not_422(client):
     schema = client.get("/openapi.json").json()
     forecast = schema["paths"]["/api/locations/{location_id}/forecast"]["get"]["responses"]
     assert "400" in forecast and "422" not in forecast
     assert client.get("/docs").status_code == 200
+
+
+def test_openapi_has_examples_and_descriptions(client):
+    schema = client.get("/openapi.json").json()
+    schemas = schema["components"]["schemas"]
+    for model_name in ["CurrentWeather", "CurrentSummary", "LocationOut", "Health", "ErrorBody", "Forecast"]:
+        assert "examples" in schemas[model_name], f"Missing examples in {model_name}"
+    for path, methods in schema["paths"].items():
+        for op in methods.values():
+            assert "summary" in op, f"Missing summary in {path}"
+            assert "description" in op, f"Missing description in {path}"
 
 
 def test_frontend_is_served_same_origin(client):
