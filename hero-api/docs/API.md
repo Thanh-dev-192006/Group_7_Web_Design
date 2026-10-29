@@ -19,6 +19,17 @@ cùng lúc `app/schemas.py`, file này, và `frontend/mock/*.json` trong một P
 
 ## Endpoint
 
+| Endpoint | Method | Mô tả | Cache |
+|---|---|---|---|
+| `/api/locations` | GET | Danh sách 15 địa điểm (hỗ trợ lọc `region`) | Không |
+| `/api/locations/{id}` | GET | Chi tiết một địa điểm theo ID | Không |
+| `/api/current` | GET | Tóm tắt thời tiết + AQI của tất cả địa điểm | 15 phút |
+| `/api/locations/{id}/current` | GET | Thời tiết + AQI hiện tại của một địa điểm | 15 phút |
+| `/api/locations/{id}/forecast` | GET | Dự báo theo giờ (1–168) và theo ngày (1–7) | 15 phút |
+| `/api/health` | GET | Kiểm tra trạng thái hệ thống (DB, cache) | Không |
+
+---
+
 ### `GET /api/locations`
 
 Danh sách địa điểm. Query: `region` = `north` \| `central` \| `south` (tùy chọn).
@@ -36,9 +47,51 @@ Danh sách địa điểm. Query: `region` = `north` \| `central` \| `south` (t�
 
 Một địa điểm. Lỗi: `404 LOCATION_NOT_FOUND`, `400 VALIDATION_ERROR` (id không phải số nguyên dương).
 
+---
+
+### `GET /api/current`
+
+Tóm tắt thời tiết + AQI của **tất cả** 15 địa điểm trong một lần gọi (dùng để tô màu marker bản đồ ngay khi tải trang).
+
+Cache 15 phút (`meta.cached = true` nếu toàn bộ kết quả lấy từ cache).
+
+> **Lưu ý:** Địa điểm nào gặp lỗi từ nguồn dữ liệu (upstream) sẽ tự động bị bỏ qua và ghi cảnh báo log hệ thống, không làm hỏng toàn bộ danh sách trả về. Nếu **tất cả** địa điểm đều lỗi, endpoint trả lỗi 502/503 theo chuẩn chung.
+
+```json
+{
+  "data": [
+    {
+      "location_id": 1,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 24.0,
+      "weather_code": 0,
+      "is_day": true,
+      "us_aqi": 42.0,
+      "aqi_category": "good"
+    },
+    {
+      "location_id": 2,
+      "observed_at": "2026-10-21T03:00:00Z",
+      "temperature_c": 25.3,
+      "weather_code": 1,
+      "is_day": true,
+      "us_aqi": 68.0,
+      "aqi_category": "moderate"
+    }
+  ],
+  "meta": {
+    "generated_at": "2026-10-21T03:00:00Z",
+    "count": 15,
+    "cached": false
+  }
+}
+```
+
+---
+
 ### `GET /api/locations/{id}/current`
 
-Thời tiết + AQI hiện tại. Cache 15 phút (`meta.cached = true` nếu lấy từ cache).
+Thời tiết + AQI hiện tại của một địa điểm. Cache 15 phút (`meta.cached = true` nếu lấy từ cache).
 
 ```json
 {
@@ -61,12 +114,14 @@ Thời tiết + AQI hiện tại. Cache 15 phút (`meta.cached = true` nếu l�
 }
 ```
 
+---
+
 ### `GET /api/locations/{id}/forecast?hours=48&days=7`
 
-| Query | Mặc định | Giới hạn |
-|---|---|---|
-| `hours` | 48 | 1–168 |
-| `days` | 7 | 1–7 |
+| Query | Mặc định | Giới hạn | Mô tả |
+|---|---|---|---|
+| `hours` | 48 | 1–168 | Số giờ dự báo tính từ hiện tại |
+| `days` | 7 | 1–7 | Số ngày dự báo (tối đa 7) |
 
 ```json
 {
@@ -91,11 +146,17 @@ Ghi chú:
 - Nếu Air Quality API lỗi hoặc ngắn hơn dự báo thời tiết, các giờ tương ứng có `pm2_5`, `us_aqi`, `aqi_category` là `null` (thời tiết vẫn trả bình thường). `current` cũng vậy.
 - `daily[].date` là ngày theo **UTC**; ngày Việt Nam (UTC+7) bắt đầu lúc 17:00 UTC hôm trước, nên các giờ cuối ngày có thể thuộc `date` kế tiếp khi so với giờ VN.
 
+---
+
 ### `GET /api/health`
 
+Trạng thái hệ thống (DB và số lượng bản ghi trong cache).
+
 ```json
-{ "data": { "status": "ok", "version": "0.1.0", "database": "ok", "cache_entries": 3 }, "meta": { "...": "..." } }
+{ "data": { "status": "ok", "version": "0.1.0", "database": "ok", "cache_entries": 3 }, "meta": { "generated_at": "2026-10-21T03:00:00Z", "count": null, "cached": null } }
 ```
+
+---
 
 ## `aqi_category` (thang US EPA, theo `us_aqi`)
 
