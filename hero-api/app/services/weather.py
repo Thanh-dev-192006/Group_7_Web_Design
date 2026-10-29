@@ -12,6 +12,7 @@ Quyết định thiết kế:
   Forecast API lỗi thì báo lỗi 502/503 như bình thường.
 - Mọi thời gian là UTC (Open-Meteo gọi với timezone=GMT); `daily[].date` là ngày theo UTC.
 """
+import concurrent.futures
 import logging
 from collections.abc import Callable
 from datetime import date, datetime, timezone
@@ -19,7 +20,7 @@ from datetime import date, datetime, timezone
 from app.config import settings
 from app.errors import AppError, UpstreamError
 from app.models import Location
-from app.schemas import CurrentWeather, DailyPoint, Forecast, HourlyPoint, utc_now
+from app.schemas import CurrentSummary, CurrentWeather, DailyPoint, Forecast, HourlyPoint, utc_now
 from app.services.aqi import category_from_us_aqi
 from app.services.cache import TTLCache
 from app.services.open_meteo import OpenMeteoClient
@@ -46,6 +47,22 @@ def _at(block: dict, key: str, index: int):
     return values[index]
 
 
+def _to_summary(current: CurrentWeather) -> CurrentSummary:
+    return CurrentSummary(
+        location_id=current.location_id,
+        observed_at=current.observed_at,
+        temperature_c=current.temperature_c,
+        weather_code=current.weather_code,
+        is_day=current.is_day,
+        us_aqi=current.us_aqi,
+        aqi_category=current.aqi_category,
+    )
+
+
+class SummaryList(list):
+    cached: bool | None = None
+
+
 class WeatherService:
     def __init__(
         self,
@@ -64,6 +81,44 @@ class WeatherService:
             ("current", location.id),
             lambda: self._build_current(location),
         )
+
+    def current_many(self, locations: list[Location]) -> list[CurrentSummary]:
+        if not locations:
+            return SummaryList([])
+
+        sorted_locations = sorted(locations, key=lambda loc: loc.id)
+        loc_results: dict[int, tuple[CurrentWeather, bool]] = {}
+        loc_errors: dict[int, Exception] = {}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=settings.overview_max_workers) as executor:
+            future_to_loc = {executor.submit(self.current, loc): loc for loc in sorted_locations}
+            for future in concurrent.futures.as_completed(future_to_loc):
+                loc = future_to_loc[future]
+                try:
+                    data, cached = future.result()
+                    loc_results[loc.id] = (data, cached)
+                except AppError as exc:
+                    loc_errors[loc.id] = exc
+                    logger.warning("Weather unavailable for %s (id=%s): %s", loc.slug, loc.id, exc.message)
+                except Exception as exc:
+                    loc_errors[loc.id] = UpstreamError("Weather data source returned an invalid response")
+                    logger.warning("Weather error for %s (id=%s): %s", loc.slug, loc.id, exc)
+
+        if len(loc_errors) == len(sorted_locations):
+            # Tất cả đều lỗi -> raise lại lỗi đầu tiên theo thứ tự location.id
+            raise loc_errors[sorted_locations[0].id]
+
+        results: list[CurrentSummary] = []
+        cached_flags: list[bool] = []
+        for loc in sorted_locations:
+            if loc.id in loc_results:
+                data, cached = loc_results[loc.id]
+                results.append(_to_summary(data))
+                cached_flags.append(cached)
+
+        out = SummaryList(results)
+        out.cached = bool(cached_flags) and all(cached_flags)
+        return out
 
     def forecast(self, location: Location, *, hours: int, days: int) -> tuple[Forecast, bool]:
         full, cached = self.cache.get_or_set(

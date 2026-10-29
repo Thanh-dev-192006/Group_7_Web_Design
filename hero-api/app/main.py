@@ -18,7 +18,7 @@ from sqlmodel import Session
 from app.config import FRONTEND_DIR, settings
 from app.database import engine, init_db
 from app.errors import register_exception_handlers
-from app.routers import health, locations, weather
+from app.routers import health, locations, overview, weather
 from app.seed import seed_locations
 
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -54,6 +54,7 @@ if settings.cors_origins:
     )
 
 app.include_router(locations.router)
+app.include_router(overview.router)
 app.include_router(weather.router)
 app.include_router(health.router)
 
