@@ -4,9 +4,13 @@ import { el, setState } from "../ui.js";
 
 let chart = null;
 
-export function renderHourly(container, hourly) {
+export function destroyHourlyChart() {
     chart?.destroy();
     chart = null;
+}
+
+export function renderHourly(container, hourly) {
+    destroyHourlyChart();
 
     if (!Array.isArray(hourly) || hourly.length === 0) {
         setState(container, "empty", "Không có dữ liệu dự báo theo giờ");
@@ -34,7 +38,7 @@ export function renderHourly(container, hourly) {
     const primary = styles.getPropertyValue("--primary").trim();
     const muted = styles.getPropertyValue("--text-muted").trim();
     const border = styles.getPropertyValue("--border").trim();
-    const rainColor = `color-mix(in srgb, ${primary} 28%, transparent)`;
+    const rainColor = styles.getPropertyValue("--chart-rain").trim();
 
     chart = new Chart(canvas, {
         type: "bar",

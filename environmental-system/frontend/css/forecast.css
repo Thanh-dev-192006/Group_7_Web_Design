@@ -1,4 +1,6 @@
 /* Biểu đồ 48 giờ, thẻ dự báo 7 ngày và icon thời tiết (issue D). */
+:root { --chart-rain: rgb(31 95 191 / 28%); }   /* = --primary ở 28%, đọc bằng getComputedStyle cho Chart.js */
+
 .chart {
     position: relative;
     width: 100%;

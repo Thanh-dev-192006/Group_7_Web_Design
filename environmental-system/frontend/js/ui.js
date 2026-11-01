@@ -14,6 +14,7 @@ export function setState(container, state, message = "") {
 export function errorMessage(error) {
     switch (error?.code) {
         case "NETWORK_ERROR": return "Không kết nối được máy chủ. Kiểm tra backend đã chạy chưa.";
+        case "TIMEOUT": return "Máy chủ phản hồi quá lâu. Vui lòng thử lại.";
         case "NOT_IMPLEMENTED": return "Tính năng này chưa sẵn sàng (backend đang phát triển). Thử ?mock=1.";
         case "UPSTREAM_UNAVAILABLE":
         case "UPSTREAM_ERROR": return "Nguồn dữ liệu thời tiết đang gặp sự cố. Vui lòng thử lại sau.";

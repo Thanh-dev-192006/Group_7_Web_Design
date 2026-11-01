@@ -4,7 +4,7 @@ import { api } from "./api.js";
 import { CONFIG } from "./config.js";
 import { renderCurrent } from "./components/current-card.js";
 import { renderDaily } from "./components/daily-list.js";
-import { renderHourly } from "./components/hourly-chart.js";
+import { destroyHourlyChart, renderHourly } from "./components/hourly-chart.js";
 import { renderLocationPicker } from "./components/location-picker.js";
 import { createMap } from "./components/map.js";
 import { fmt } from "./format.js";
@@ -19,6 +19,8 @@ const views = {
     daily: $("#daily"),
     updatedAt: $("#updated-at"),
 };
+
+const INVALID_DATA_MESSAGE = "Dữ liệu trả về không hợp lệ";
 
 let mapView = null;
 let requestSeq = 0;   // bỏ qua response cũ khi người dùng đổi địa điểm liên tục
@@ -47,9 +49,15 @@ async function refreshCurrent() {
     try {
         const response = await api.getCurrent(locationId);
         if (seq !== requestSeq) return;
-        renderCurrent(views.current, response.data);
-        mapView?.setMarkerAqi(locationId, response.data.aqi_category);
-        views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(response.meta.generated_at)}`;
+        try {
+            renderCurrent(views.current, response.data);
+            // Mock current.json luôn là địa điểm 1: không dùng nó để tô marker.
+            if (!CONFIG.USE_MOCK) mapView?.setMarkerAqi(locationId, response.data.aqi_category);
+            views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(response.meta.generated_at)}`;
+        } catch (renderError) {
+            console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
+            setState(views.current, "error", INVALID_DATA_MESSAGE);
+        }
     } catch (error) {
         console.warn("Không làm mới được thời tiết hiện tại.", error);
     } finally {
@@ -63,6 +71,7 @@ async function selectLocation(locationId) {
     views.updatedAt.textContent = CONFIG.USE_MOCK ? "Chế độ dữ liệu mẫu (mock)" : "";
     views.select.value = String(locationId);
     mapView?.select(locationId);
+    destroyHourlyChart();
     for (const view of [views.current, views.hourly, views.daily]) setState(view, "loading");
 
     // Hai request độc lập: một cái lỗi không làm hỏng cái còn lại.
@@ -73,18 +82,32 @@ async function selectLocation(locationId) {
     if (seq !== requestSeq) return;
 
     if (current.status === "fulfilled") {
-        renderCurrent(views.current, current.value.data);
-        mapView?.setMarkerAqi(locationId, current.value.data.aqi_category);
-        views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(current.value.meta.generated_at)}`;
+        try {
+            renderCurrent(views.current, current.value.data);
+            // Mock current.json luôn là địa điểm 1: marker lấy từ current-all.json.
+            if (!CONFIG.USE_MOCK) mapView?.setMarkerAqi(locationId, current.value.data.aqi_category);
+            views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(current.value.meta.generated_at)}`;
+        } catch (renderError) {
+            console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
+            setState(views.current, "error", INVALID_DATA_MESSAGE);
+        }
     } else {
         setState(views.current, "error", errorMessage(current.reason));
     }
 
     if (forecast.status === "fulfilled") {
-        renderHourly(views.hourly, forecast.value.data.hourly);
-        renderDaily(views.daily, forecast.value.data.daily);
+        try {
+            renderHourly(views.hourly, forecast.value.data.hourly);
+            renderDaily(views.daily, forecast.value.data.daily);
+        } catch (renderError) {
+            console.error("Lỗi hiển thị dự báo.", renderError);
+            destroyHourlyChart();
+            setState(views.hourly, "error", INVALID_DATA_MESSAGE);
+            setState(views.daily, "error", INVALID_DATA_MESSAGE);
+        }
     } else {
         const message = errorMessage(forecast.reason);
+        destroyHourlyChart();
         setState(views.hourly, "error", message);
         setState(views.daily, "error", message);
     }
@@ -125,4 +148,4 @@ async function init() {
     }, CONFIG.REFRESH_MINUTES * 60 * 1000);
 }
 
-init();
+init().catch((error) => console.error("Khởi tạo thất bại.", error));

@@ -15,18 +15,32 @@ export class ApiError extends Error {
 async function request(path, { mockFile } = {}) {
     const url = CONFIG.USE_MOCK && mockFile ? `mock/${mockFile}` : `${CONFIG.API_BASE}${path}`;
 
-    let response;
-    try {
-        response = await fetch(url, { headers: { Accept: "application/json" } });
-    } catch {
-        throw new ApiError(0, "NETWORK_ERROR", "Không kết nối được máy chủ");
-    }
+    // Một timer cho cả request, gồm cả lúc đọc body.
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, CONFIG.REQUEST_TIMEOUT_MS);
+    const timeoutError = () => new ApiError(0, "TIMEOUT", "Máy chủ phản hồi quá lâu");
 
+    let response;
     let body = null;
     try {
-        body = await response.json();
-    } catch {
-        // body không phải JSON
+        try {
+            response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
+        } catch {
+            throw timedOut ? timeoutError() : new ApiError(0, "NETWORK_ERROR", "Không kết nối được máy chủ");
+        }
+
+        try {
+            body = await response.json();
+        } catch {
+            // body không phải JSON (hoặc quá thời gian khi đọc body)
+            if (timedOut) throw timeoutError();
+        }
+    } finally {
+        clearTimeout(timer);
     }
 
     if (!response.ok) {

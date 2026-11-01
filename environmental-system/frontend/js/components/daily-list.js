@@ -9,7 +9,7 @@ export function renderDaily(container, daily) {
         return;
     }
 
-    const list = el("ul", { className: "daily", "aria-label": "Dự báo thời tiết theo ngày" });
+    const list = el("ul", { className: "daily", ariaLabel: "Dự báo thời tiết theo ngày" });
     for (const day of daily) {
         const item = el("li", { className: "daily__item" },
             el("span", { className: "daily__day" }, fmt.weekday(day.date)),
