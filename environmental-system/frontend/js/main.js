@@ -8,6 +8,7 @@ import { destroyHourlyChart, renderHourly } from "./components/hourly-chart.js";
 import { renderLocationPicker } from "./components/location-picker.js";
 import { createMap } from "./components/map.js";
 import { fmt } from "./format.js";
+import { pickInitialLocation, readStoredId, storeId } from "./location-memory.js";
 import { errorMessage, setState } from "./ui.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -65,9 +66,18 @@ async function refreshCurrent() {
     }
 }
 
+// Lưu id vào localStorage và ghi ?city=<id> lên URL (giữ nguyên các tham số khác như mock=1).
+function rememberLocation(locationId) {
+    storeId(locationId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("city", String(locationId));
+    history.replaceState(null, "", url);
+}
+
 async function selectLocation(locationId) {
     const seq = ++requestSeq;
     selectedLocationId = locationId;
+    rememberLocation(locationId);
     views.updatedAt.textContent = CONFIG.USE_MOCK ? "Chế độ dữ liệu mẫu (mock)" : "";
     views.select.value = String(locationId);
     mapView?.select(locationId);
@@ -136,11 +146,14 @@ async function init() {
         return;
     }
 
-    const firstId = locations[0].id;
-    renderLocationPicker(views.select, locations, { selectedId: firstId, onChange: selectLocation });
+    const initialId = pickInitialLocation(locations, {
+        urlCity: new URLSearchParams(window.location.search).get("city"),
+        storedId: readStoredId(),
+    });
+    renderLocationPicker(views.select, locations, { selectedId: initialId, onChange: selectLocation });
     mapView = createMap(views.map, locations, { onSelect: selectLocation });
     void refreshMarkers();
-    await selectLocation(firstId);
+    await selectLocation(initialId);
     setInterval(() => {
         if (document.hidden) return;
         void refreshCurrent();
