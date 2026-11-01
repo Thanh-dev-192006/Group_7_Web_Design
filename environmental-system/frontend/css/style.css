@@ -182,7 +182,8 @@ a { color: var(--primary); }
    States — mọi vùng dữ liệu dùng chung (xem js/ui.js)
    ========================================================================== */
 .state { color: var(--text-muted); }
-.state--loading::before {
+/* Spinner chỉ cho markup tĩnh trong index.html; setState("loading") dùng skeleton. */
+.state--loading:not(:has(.skeleton))::before {
     content: "";
     display: inline-block;
     width: 1em; height: 1em;
@@ -196,8 +197,45 @@ a { color: var(--primary); }
 .state--error { color: var(--danger); }
 .state--empty { font-style: italic; }
 
+.state__retry {
+    display: block;
+    margin: .75rem auto 0;
+    padding: .4rem 1rem;
+    font: inherit;
+    color: #fff;
+    background: var(--primary);
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.state__retry:hover { filter: brightness(1.1); }
+.state__retry:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.skeleton {
+    height: 1rem;
+    margin: .6rem 0;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--border) 25%, rgba(255, 255, 255, .5) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+}
+.skeleton--title { height: 1.6rem; width: 55%; }
+.skeleton--short { width: 70%; }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
 
 @media (prefers-reduced-motion: reduce) {
     .state--loading::before { animation: none; }
+    .skeleton { animation: none; }
 }

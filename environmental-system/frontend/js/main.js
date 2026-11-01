@@ -23,6 +23,16 @@ const views = {
 
 const INVALID_DATA_MESSAGE = "Dữ liệu trả về không hợp lệ";
 
+// Nút "Thử lại" của các vùng dữ liệu: tải lại địa điểm đang chọn / chạy lại init.
+const retrySelected = { onRetry: () => void selectLocation(selectedLocationId) };
+const retryInit = {
+    onRetry: () => {
+        // Dọn trạng thái lỗi (kể cả class "map" của #map) trước khi init tạo lại bản đồ.
+        for (const view of [views.current, views.hourly, views.daily, views.map]) setState(view, "loading");
+        void init().catch((error) => console.error("Khởi tạo thất bại.", error));
+    },
+};
+
 let mapView = null;
 let requestSeq = 0;   // bỏ qua response cũ khi người dùng đổi địa điểm liên tục
 let selectedLocationId = null;
@@ -57,7 +67,7 @@ async function refreshCurrent() {
             views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(response.meta.generated_at)}`;
         } catch (renderError) {
             console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
-            setState(views.current, "error", INVALID_DATA_MESSAGE);
+            setState(views.current, "error", INVALID_DATA_MESSAGE, retrySelected);
         }
     } catch (error) {
         console.warn("Không làm mới được thời tiết hiện tại.", error);
@@ -99,10 +109,10 @@ async function selectLocation(locationId) {
             views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(current.value.meta.generated_at)}`;
         } catch (renderError) {
             console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
-            setState(views.current, "error", INVALID_DATA_MESSAGE);
+            setState(views.current, "error", INVALID_DATA_MESSAGE, retrySelected);
         }
     } else {
-        setState(views.current, "error", errorMessage(current.reason));
+        setState(views.current, "error", errorMessage(current.reason), retrySelected);
     }
 
     if (forecast.status === "fulfilled") {
@@ -112,14 +122,14 @@ async function selectLocation(locationId) {
         } catch (renderError) {
             console.error("Lỗi hiển thị dự báo.", renderError);
             destroyHourlyChart();
-            setState(views.hourly, "error", INVALID_DATA_MESSAGE);
-            setState(views.daily, "error", INVALID_DATA_MESSAGE);
+            setState(views.hourly, "error", INVALID_DATA_MESSAGE, retrySelected);
+            setState(views.daily, "error", INVALID_DATA_MESSAGE, retrySelected);
         }
     } else {
         const message = errorMessage(forecast.reason);
         destroyHourlyChart();
-        setState(views.hourly, "error", message);
-        setState(views.daily, "error", message);
+        setState(views.hourly, "error", message, retrySelected);
+        setState(views.daily, "error", message, retrySelected);
     }
 }
 
@@ -132,7 +142,7 @@ async function init() {
     } catch (error) {
         views.select.replaceChildren(new Option("Không tải được địa điểm"));
         for (const view of [views.current, views.hourly, views.daily, views.map]) {
-            setState(view, "error", errorMessage(error));
+            setState(view, "error", errorMessage(error), retryInit);
         }
         views.map.classList.add("map");
         return;
