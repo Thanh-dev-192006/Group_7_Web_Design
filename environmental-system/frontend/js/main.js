@@ -79,9 +79,13 @@ async function refreshCurrent() {
 // Lưu id vào localStorage và ghi ?city=<id> lên URL (giữ nguyên các tham số khác như mock=1).
 function rememberLocation(locationId) {
     storeId(locationId);
-    const url = new URL(window.location.href);
-    url.searchParams.set("city", String(locationId));
-    history.replaceState(null, "", url);
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("city", String(locationId));
+        history.replaceState(null, "", url);
+    } catch {
+        // Origin bị sandbox/opaque: replaceState ném SecurityError, bỏ qua (giống storeId).
+    }
 }
 
 async function selectLocation(locationId) {
@@ -139,6 +143,7 @@ async function init() {
     let locations;
     try {
         locations = (await api.getLocations()).data;
+        if (!Array.isArray(locations)) throw new TypeError("Danh sách địa điểm không hợp lệ");
     } catch (error) {
         views.select.replaceChildren(new Option("Không tải được địa điểm"));
         for (const view of [views.current, views.hourly, views.daily, views.map]) {

@@ -14,6 +14,7 @@ export function rainAlert(hourly, { windowHours = 12, threshold = 60 } = {}) {
                 level: isStormCode(code) ? "storm" : "rain",
                 time: point.time,
                 probability: probability ?? null,
+                byProbability: likely,   // true: xác suất đạt ngưỡng nên mới hiện %
             };
         }
     }
@@ -25,7 +26,7 @@ export function rainAlertText(alert, formatTime) {
     if (!alert) return "";
     if (alert.level === "storm") return `⛈ Có dông lúc ${formatTime(alert.time)}`;
     if (alert.level === "rain") {
-        const chance = alert.probability != null ? ` (${Math.round(alert.probability)}%)` : "";
+        const chance = alert.byProbability && alert.probability != null ? ` (${Math.round(alert.probability)}%)` : "";
         return `☔ Có khả năng mưa lúc ${formatTime(alert.time)}${chance}`;
     }
     return "Không có mưa đáng kể trong 12 giờ tới";

@@ -12,6 +12,6 @@ export const CONFIG = {
     FORECAST_HOURS: 48,
     FORECAST_DAYS: 7,
     REFRESH_MINUTES: 10,            // làm mới thẻ hiện tại + màu marker (issue C)
-    REQUEST_TIMEOUT_MS: 15000,      // quá thời gian này coi như máy chủ không phản hồi
+    REQUEST_TIMEOUT_MS: 25000,      // cache nguội: backend gọi 2 upstream tuần tự, mỗi cái timeout 10 s (httpx)
     TIMEZONE: "Asia/Ho_Chi_Minh",   // API trả UTC, hiển thị theo giờ VN
 };

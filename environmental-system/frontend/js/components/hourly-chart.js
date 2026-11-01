@@ -10,6 +10,13 @@ export function destroyHourlyChart() {
     chart = null;
 }
 
+function appendRainAlert(container, hourly) {
+    const alert = rainAlert(hourly);
+    if (alert) {
+        container.append(el("p", { className: `rain-alert rain-alert--${alert.level}` }, rainAlertText(alert, fmt.time)));
+    }
+}
+
 export function renderHourly(container, hourly) {
     destroyHourlyChart();
 
@@ -19,6 +26,7 @@ export function renderHourly(container, hourly) {
     }
     if (typeof Chart === "undefined") {
         setState(container, "error", "Không tải được thư viện biểu đồ.");
+        appendRainAlert(container, hourly);
         return;
     }
 
@@ -33,10 +41,7 @@ export function renderHourly(container, hourly) {
     });
     const wrapper = el("div", { className: "chart" }, canvas);
     setState(container, "ready");
-    const alert = rainAlert(hourly);
-    if (alert) {
-        container.append(el("p", { className: `rain-alert rain-alert--${alert.level}` }, rainAlertText(alert, fmt.time)));
-    }
+    appendRainAlert(container, hourly);
     container.append(wrapper);
 
     const styles = getComputedStyle(document.documentElement);
