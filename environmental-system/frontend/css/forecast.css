@@ -9,6 +9,18 @@
 }
 .chart canvas { display: block; max-width: 100%; }
 
+.rain-alert {
+    margin: 0 0 .6rem;
+    padding: .45rem .7rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: .9rem;
+    color: var(--text);
+}
+.rain-alert--rain { border-color: var(--primary); background: var(--chart-rain); }
+.rain-alert--storm { border-color: var(--danger); font-weight: 600; }
+.rain-alert--none { color: var(--text-muted); }
+
 .daily {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));

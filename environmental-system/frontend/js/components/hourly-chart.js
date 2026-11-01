@@ -1,5 +1,6 @@
 // Biểu đồ nhiệt độ và xác suất mưa theo giờ.
 import { fmt } from "../format.js";
+import { rainAlert, rainAlertText } from "../rain-alert.js";
 import { el, setState } from "../ui.js";
 
 let chart = null;
@@ -32,6 +33,10 @@ export function renderHourly(container, hourly) {
     });
     const wrapper = el("div", { className: "chart" }, canvas);
     setState(container, "ready");
+    const alert = rainAlert(hourly);
+    if (alert) {
+        container.append(el("p", { className: `rain-alert rain-alert--${alert.level}` }, rainAlertText(alert, fmt.time)));
+    }
     container.append(wrapper);
 
     const styles = getComputedStyle(document.documentElement);
