@@ -1,6 +1,7 @@
 // Thẻ thời tiết hiện tại — component MẪU: các component khác viết theo cùng kiểu
 // (nhận container + data, chỉ dùng el()/textContent, không innerHTML).
 import { aqiBadge } from "../aqi.js";
+import { healthAdvice } from "../health.js";
 import { fmt, weatherText } from "../format.js";
 import { el, setState } from "../ui.js";
 import { weatherIcon } from "../weather-icons.js";
@@ -27,6 +28,18 @@ export function renderCurrent(container, current) {
             el("dl", { className: "stats" },
                 ...stats.map(([label, value]) => el("div", {}, el("dt", {}, label), el("dd", {}, value))),
             ),
+            adviceBlock(current.aqi_category),
         ),
+    );
+}
+
+/** Khối lời khuyên sức khỏe theo mức AQI; null (không hiển thị) nếu mức không xác định. */
+function adviceBlock(category) {
+    const advice = healthAdvice(category);
+    if (!advice) return null;
+    return el("div", { className: `advice aqi-advice--${category}` },
+        el("h3", { className: "advice__title" }, "Lời khuyên sức khỏe"),
+        el("p", {}, el("strong", {}, "Mọi người: "), advice.general),
+        el("p", {}, el("strong", {}, "Nhóm nhạy cảm: "), advice.sensitive),
     );
 }

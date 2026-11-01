@@ -167,6 +167,17 @@ a { color: var(--primary); }
 .stats dt { font-size: .8rem; color: var(--text-muted); }
 .stats dd { margin: 0; font-weight: 600; }
 
+/* Lời khuyên sức khỏe dưới thẻ hiện tại: viền trái theo màu AQI (xem js/health.js) */
+.advice { padding: .5rem .75rem; border-left: 4px solid var(--aqi-unknown); border-radius: 4px; }
+.advice__title { margin: 0 0 .25rem; font-size: .95rem; }
+.advice p { margin: .25rem 0; font-size: .9rem; }
+.aqi-advice--good { border-left-color: var(--aqi-good); }
+.aqi-advice--moderate { border-left-color: var(--aqi-moderate); }
+.aqi-advice--unhealthy_sensitive { border-left-color: var(--aqi-unhealthy-sensitive); }
+.aqi-advice--unhealthy { border-left-color: var(--aqi-unhealthy); }
+.aqi-advice--very_unhealthy { border-left-color: var(--aqi-very-unhealthy); }
+.aqi-advice--hazardous { border-left-color: var(--aqi-hazardous); }
+
 /* ==========================================================================
    States — mọi vùng dữ liệu dùng chung (xem js/ui.js)
    ========================================================================== */
