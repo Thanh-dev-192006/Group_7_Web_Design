@@ -20,7 +20,7 @@ def hours(n: int):
     return [(FIRST_HOUR + timedelta(hours=i)).strftime("%Y-%m-%dT%H:%M") for i in range(n)]
 
 
-def forecast_payload(n_hours: int = 168, n_days: int = 7) -> dict:
+def forecast_payload(n_hours: int = 192, n_days: int = 8) -> dict:
     return {
         "current": {
             "time": "2026-10-28T14:30", "temperature_2m": 30.5, "relative_humidity_2m": 70,
@@ -102,15 +102,15 @@ def test_current_survives_air_quality_failure():
 
 def test_forecast_starts_at_current_hour_and_has_168_points():
     data, _ = make_service(ok_handler()).forecast(LOCATION, hours=168, days=7)
-    # payload 168 giờ từ 00:00; bỏ 14 giờ đầu (00:00–13:00) → còn 154
+    # payload 192 giờ (forecast_days = 8) từ 00:00; bỏ 14 giờ đầu → còn 178, cắt về 168
     assert data.hourly[0].time == datetime(2026, 10, 28, 14, 0, tzinfo=timezone.utc)
-    assert len(data.hourly) == 154
+    assert len(data.hourly) == 168
     assert len(data.daily) == 7
 
 
 def test_forecast_hours_168_with_days_3_is_not_truncated_by_days():
     data, _ = make_service(ok_handler()).forecast(LOCATION, hours=168, days=3)
-    assert len(data.hourly) == 154       # không bị giới hạn bởi days
+    assert len(data.hourly) == 168       # không bị giới hạn bởi days
     assert len(data.daily) == 3
 
 
@@ -166,3 +166,50 @@ def test_malformed_payload_becomes_upstream_error():
         make_service(ok_handler(forecast={"unexpected": True})).current(LOCATION)
     with pytest.raises(UpstreamError):
         make_service(ok_handler(forecast={"unexpected": True})).forecast(LOCATION, hours=1, days=1)
+
+
+def test_injected_empty_cache_is_kept():
+    injected = TTLCache(60)
+    service = WeatherService(client=OpenMeteoClient(httpx.Client()), cache=injected)
+    assert service.cache is injected
+
+
+def test_injected_client_is_kept():
+    client = OpenMeteoClient(httpx.Client(transport=httpx.MockTransport(ok_handler())))
+    assert WeatherService(client=client, cache=TTLCache(60)).client is client
+
+
+def test_forecast_requests_one_extra_day_so_168_future_hours_exist():
+    seen: list[str] = []
+
+    def handler(request):
+        if not request.url.host.startswith("air-quality"):
+            seen.append(request.url.params["forecast_days"])
+        return ok_handler()(request)
+
+    make_service(handler).forecast(LOCATION, hours=168, days=7)
+    assert seen == ["8"]
+
+
+def test_cached_forecast_hourly_starts_at_serve_time_hour():
+    now = [datetime(2026, 10, 28, 13, 50, tzinfo=timezone.utc)]
+    calls: list[str] = []
+
+    def wrapped(request):
+        calls.append(request.url.host)
+        return ok_handler()(request)
+
+    service = WeatherService(
+        client=OpenMeteoClient(httpx.Client(transport=httpx.MockTransport(wrapped))),
+        cache=TTLCache(60),
+        clock=lambda: now[0],
+    )
+    first, _ = service.forecast(LOCATION, hours=168, days=7)
+    assert first.hourly[0].time == datetime(2026, 10, 28, 13, 0, tzinfo=timezone.utc)
+
+    now[0] = datetime(2026, 10, 28, 14, 5, tzinfo=timezone.utc)
+    second, cached = service.forecast(LOCATION, hours=168, days=7)
+    assert cached is True
+    assert len(calls) == 2               # không gọi HTTP thêm
+    assert second.hourly[0].time == datetime(2026, 10, 28, 14, 0, tzinfo=timezone.utc)
+    assert len(second.hourly) == 168

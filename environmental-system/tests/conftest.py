@@ -27,7 +27,8 @@ class FakeWeatherService(WeatherService):
     """Giữ nguyên logic cache của WeatherService, chỉ thay phần lấy dữ liệu."""
 
     def __init__(self, fail_for: dict[int | None, Exception] | None = None):
-        super().__init__(client=object(), cache=TTLCache(ttl_seconds=60))
+        # clock cố định = FIXED_TIME để forecast() (lọc theo giờ hiện tại) không bỏ mất dữ liệu giả
+        super().__init__(client=object(), cache=TTLCache(ttl_seconds=60), clock=lambda: FIXED_TIME)
         self.calls = 0
         self.fail_for: dict[int | None, Exception] = fail_for or {}
 

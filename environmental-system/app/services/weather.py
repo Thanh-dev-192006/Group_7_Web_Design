@@ -70,8 +70,8 @@ class WeatherService:
         cache: TTLCache | None = None,
         clock: Callable[[], datetime] = utc_now,
     ):
-        self.client = client or OpenMeteoClient()
-        self.cache = cache or TTLCache(settings.cache_ttl_seconds)
+        self.client = client if client is not None else OpenMeteoClient()
+        self.cache = cache if cache is not None else TTLCache(settings.cache_ttl_seconds)
         self._clock = clock          # inject được trong test
 
     # ----- API dùng bởi router -----
@@ -125,7 +125,14 @@ class WeatherService:
             ("forecast", location.id),
             lambda: self._build_forecast(location),
         )
-        trimmed = Forecast(location_id=full.location_id, hourly=full.hourly[:hours], daily=full.daily[:days])
+        # Bản cache giữ mọi giờ của payload; lọc theo giờ hiện tại lúc trả ra để không bị lệch khi cache cũ.
+        start = self._clock().astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        upcoming = [p for p in full.hourly if p.time >= start]
+        trimmed = Forecast(
+            location_id=full.location_id,
+            hourly=upcoming[:min(hours, MAX_HOURS)],
+            daily=full.daily[:days],
+        )
         return trimmed, cached
 
     # ----- chuyển đổi dữ liệu -----
@@ -165,8 +172,9 @@ class WeatherService:
         )
 
     def _build_forecast(self, location: Location) -> Forecast:
-        """Bản dự báo đầy đủ (tối đa 168 giờ, 7 ngày), bắt đầu từ giờ hiện tại (UTC)."""
-        weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=MAX_DAYS)
+        """Bản dự báo đầy đủ (mọi giờ của payload, tối đa 7 ngày); lọc theo giờ hiện tại khi trả ra."""
+        # Lấy thêm 1 ngày vì payload bắt đầu từ 00:00 hôm nay → vẫn đủ 168 giờ tương lai.
+        weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=MAX_DAYS + 1)
         air = self._fetch_air_quality(location)
         try:
             hourly = self._build_hourly(weather["hourly"], air.get("hourly") or {})
@@ -176,7 +184,6 @@ class WeatherService:
         return Forecast(location_id=location.id, hourly=hourly, daily=daily)
 
     def _build_hourly(self, hourly: dict, air_hourly: dict) -> list[HourlyPoint]:
-        start = self._clock().astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
         # Ghép air quality theo thời gian, không theo index.
         air_by_time = {
             _parse_time(t): i for i, t in enumerate(air_hourly.get("time") or [])
@@ -184,8 +191,6 @@ class WeatherService:
         points: list[HourlyPoint] = []
         for i, raw_time in enumerate(hourly["time"]):
             time = _parse_time(raw_time)
-            if time < start:
-                continue
             j = air_by_time.get(time)
             us_aqi = _at(air_hourly, "us_aqi", j) if j is not None else None
             points.append(HourlyPoint(
@@ -198,8 +203,6 @@ class WeatherService:
                 us_aqi=us_aqi,
                 aqi_category=category_from_us_aqi(us_aqi),
             ))
-            if len(points) >= MAX_HOURS:
-                break
         return points
 
     @staticmethod
