@@ -120,12 +120,6 @@ node --test frontend/tests/*.test.mjs
         └── plans/                 # design and implementation plans
 ```
 
-## Documentation
-
-- Developer guide: [`environmental-system/README.md`](environmental-system/README.md)
-- API contract: [`environmental-system/docs/API.md`](environmental-system/docs/API.md)
-- Team workflow: [`environmental-system/CONTRIBUTING.md`](environmental-system/CONTRIBUTING.md)
-
 ## Team members (Group 7)
 
 1. Member 1: _[Full name - student ID]_
@@ -133,10 +127,4 @@ node --test frontend/tests/*.test.mjs
 3. Member 3: _[Full name - student ID]_
 4. Member 4: _[Full name - student ID]_
 
-## Credits and data sources
 
-- Weather and air-quality data: [Open-Meteo](https://open-meteo.com/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-- Map library: [Leaflet](https://leafletjs.com/), with map tiles from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
-- Fallback basemap tiles (used in `frontend/js/components/map.js`): [CARTO](https://carto.com/attributions) basemaps, © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors © CARTO.
-- Charts: [Chart.js](https://www.chartjs.org/).
-- The infrastructure pattern (session dependency, router/service layout, in-memory SQLite tests with `TestClient`) is adapted from the course's *Hero API - Week 9/10 lab reference solution*. The weather and AQI domain logic and the UI were written for this project.
