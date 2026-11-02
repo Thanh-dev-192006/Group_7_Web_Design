@@ -1,16 +1,12 @@
-"""Service thời tiết: ghép Open-Meteo (forecast + air quality) → schema của mình.
+"""Weather service: merges Open-Meteo forecast + air quality into our schemas, with caching.
 
-Router chỉ gọi `current()` / `forecast()`; cache được xử lý ở đây.
-
-Quyết định thiết kế:
-- Dự báo luôn lấy đủ 7 ngày / 168 giờ cho mỗi địa điểm và cache MỘT bản duy nhất;
-  `hours` / `days` chỉ cắt bớt khi trả ra → mọi tổ hợp tham số dùng chung 1 cache
-  và không bao giờ thiếu dữ liệu khi `hours` lớn hơn `days * 24`.
-- Hai API (forecast / air quality) có thể lệch số giờ → ghép theo `time`, không theo index.
-- Thiếu giá trị → None (không đổi thành 0).
-- Air Quality API lỗi thì vẫn trả thời tiết, các trường AQI là null (AQI là phần phụ).
-  Forecast API lỗi thì báo lỗi 502/503 như bình thường.
-- Mọi thời gian là UTC (Open-Meteo gọi với timezone=GMT); `daily[].date` là ngày theo UTC.
+Design notes:
+- The cache holds one full 7-day / 168-hour payload per location; `hours` / `days`
+  only trim at serve time, and hourly points are filtered by the current hour then.
+- The two APIs can differ in hour count, so air quality is joined by `time`, not index.
+- Missing values stay None (never 0).
+- If air quality fails, weather is still returned with null AQI fields; a forecast failure is a 502/503.
+- All times are UTC (timezone=GMT); `daily[].date` is the UTC date.
 """
 import concurrent.futures
 import logging
@@ -27,12 +23,12 @@ from app.services.open_meteo import OpenMeteoClient
 
 logger = logging.getLogger(__name__)
 
-MAX_DAYS = 7                 # Open-Meteo Air Quality chỉ dự báo tối đa ~7 ngày
+MAX_DAYS = 7                 # Open-Meteo Air Quality forecasts at most ~7 days
 MAX_HOURS = MAX_DAYS * 24    # 168
 
 
 def _parse_time(value: str) -> datetime:
-    """'2026-10-28T14:00' (không tz, là GMT) → datetime UTC."""
+    """Parse '2026-10-28T14:00' (naive, GMT) into a UTC datetime."""
     parsed = datetime.fromisoformat(value)
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=timezone.utc)
@@ -40,7 +36,7 @@ def _parse_time(value: str) -> datetime:
 
 
 def _at(block: dict, key: str, index: int):
-    """Phần tử `index` của cột `key` trong block dạng cột; thiếu → None."""
+    """Element `index` of column `key` in a columnar block; None if missing."""
     values = block.get(key)
     if not values or index >= len(values):
         return None
@@ -72,11 +68,10 @@ class WeatherService:
     ):
         self.client = client if client is not None else OpenMeteoClient()
         self.cache = cache if cache is not None else TTLCache(settings.cache_ttl_seconds)
-        self._clock = clock          # inject được trong test
+        self._clock = clock          # injectable in tests
 
-    # ----- API dùng bởi router -----
     def current(self, location: Location) -> tuple[CurrentWeather, bool]:
-        """Trả (dữ liệu, cached)."""
+        """Return (data, cached)."""
         return self.cache.get_or_set(
             ("current", location.id),
             lambda: self._build_current(location),
@@ -105,7 +100,7 @@ class WeatherService:
                     logger.warning("Weather error for %s (id=%s): %s", loc.slug, loc.id, exc)
 
         if len(loc_errors) == len(sorted_locations):
-            # Tất cả đều lỗi -> raise lại lỗi đầu tiên theo thứ tự location.id
+            # All failed: re-raise the first error by location.id
             raise loc_errors[sorted_locations[0].id]
 
         results: list[CurrentSummary] = []
@@ -125,7 +120,6 @@ class WeatherService:
             ("forecast", location.id),
             lambda: self._build_forecast(location),
         )
-        # Bản cache giữ mọi giờ của payload; lọc theo giờ hiện tại lúc trả ra để không bị lệch khi cache cũ.
         start = self._clock().astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
         upcoming = [p for p in full.hourly if p.time >= start]
         trimmed = Forecast(
@@ -135,7 +129,6 @@ class WeatherService:
         )
         return trimmed, cached
 
-    # ----- chuyển đổi dữ liệu -----
     def _fetch_air_quality(self, location: Location) -> dict:
         try:
             return self.client.fetch_air_quality(location.lat, location.lon, forecast_days=MAX_DAYS)
@@ -172,8 +165,8 @@ class WeatherService:
         )
 
     def _build_forecast(self, location: Location) -> Forecast:
-        """Bản dự báo đầy đủ (mọi giờ của payload, tối đa 7 ngày); lọc theo giờ hiện tại khi trả ra."""
-        # Lấy thêm 1 ngày vì payload bắt đầu từ 00:00 hôm nay → vẫn đủ 168 giờ tương lai.
+        """Full forecast (every payload hour, up to 7 days); trimmed at serve time."""
+        # One extra day: the payload starts at 00:00 today, so 168 future hours remain.
         weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=MAX_DAYS + 1)
         air = self._fetch_air_quality(location)
         try:
@@ -184,7 +177,6 @@ class WeatherService:
         return Forecast(location_id=location.id, hourly=hourly, daily=daily)
 
     def _build_hourly(self, hourly: dict, air_hourly: dict) -> list[HourlyPoint]:
-        # Ghép air quality theo thời gian, không theo index.
         air_by_time = {
             _parse_time(t): i for i, t in enumerate(air_hourly.get("time") or [])
         }
@@ -224,7 +216,7 @@ _service: WeatherService | None = None
 
 
 def get_weather_service() -> WeatherService:
-    """Dependency FastAPI. Test override bằng app.dependency_overrides."""
+    """FastAPI dependency; tests override it via app.dependency_overrides."""
     global _service
     if _service is None:
         _service = WeatherService()

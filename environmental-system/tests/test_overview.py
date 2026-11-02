@@ -1,4 +1,4 @@
-"""Test router /api/current với FakeWeatherService (conftest.py)."""
+"""/api/current router tests with FakeWeatherService (conftest.py)."""
 from app.errors import UpstreamError, UpstreamUnavailable
 
 
@@ -9,21 +9,19 @@ def test_current_all_returns_one_item_per_location(client):
     data = body["data"]
     meta = body["meta"]
 
-    # Đếm = số địa điểm seed (15)
+    # One item per seeded location (15)
     assert len(data) == 15
-    # meta.count khớp
     assert meta["count"] == 15
-    # Thứ tự theo id
+    # Ordered by id
     ids = [item["location_id"] for item in data]
     assert ids == sorted(ids)
     assert ids == list(range(1, 16))
-    # observed_at kết thúc bằng Z
     for item in data:
         assert item["observed_at"].endswith("Z")
 
 
 def test_current_all_skips_failing_location(client, weather_service):
-    # Cho weather_service raise UpstreamError với location.id = 3
+    # Fail location 3 only
     weather_service.fail_for = {3: UpstreamError("Upstream failure for location 3")}
 
     response = client.get("/api/current")
@@ -31,7 +29,7 @@ def test_current_all_skips_failing_location(client, weather_service):
     body = response.json()
     data = body["data"]
 
-    # Danh sách thiếu đúng 1 phần tử (còn 14)
+    # Exactly one item is missing
     assert len(data) == 14
     assert body["meta"]["count"] == 14
     ids = [item["location_id"] for item in data]
@@ -40,7 +38,7 @@ def test_current_all_skips_failing_location(client, weather_service):
 
 
 def test_current_all_all_fail_returns_error_format(client, weather_service):
-    # Tất cả raise UpstreamUnavailable
+    # Every location fails
     weather_service.fail_for = {None: UpstreamUnavailable("Open-Meteo connection timeout")}
 
     response = client.get("/api/current")

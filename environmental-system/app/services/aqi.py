@@ -1,11 +1,9 @@
-"""Phân mức AQI — logic duy nhất, frontend KHÔNG tự tính lại.
-
-Dùng chỉ số `us_aqi` mà Open-Meteo trả về (thang US EPA 0–500).
-Màu tương ứng nằm ở frontend/css/style.css (biến --aqi-*).
+"""AQI categorisation from Open-Meteo's `us_aqi` (US EPA 0-500); the frontend must not recompute it.
+Colors live in frontend/css/style.css (--aqi-* variables).
 """
 from app.schemas import AqiCategory
 
-# (ngưỡng trên, category) — giá trị <= ngưỡng thuộc category đó
+# (upper bound, category); a value <= the bound belongs to that category
 _US_AQI_BREAKPOINTS: list[tuple[float, AqiCategory]] = [
     (50, AqiCategory.good),
     (100, AqiCategory.moderate),

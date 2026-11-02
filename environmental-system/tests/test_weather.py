@@ -1,7 +1,4 @@
-"""Test router thời tiết với FakeWeatherService (conftest.py).
-
-Test service thật (ghép dữ liệu Open-Meteo) nằm ở test_weather_service.py.
-"""
+"""Weather router tests with FakeWeatherService (conftest.py); the real service is in test_weather_service.py."""
 from app.errors import UpstreamError, UpstreamUnavailable
 
 
@@ -12,7 +9,7 @@ def test_current_returns_envelope_and_uses_cache(client, weather_service):
     assert body["data"]["location_id"] == 1
     assert body["data"]["aqi_category"] == "moderate"
     assert body["data"]["observed_at"].endswith("Z")
-    assert body["data"]["wind_speed_kmh"] is None      # thiếu → null, không phải 0
+    assert body["data"]["wind_speed_kmh"] is None      # missing -> null, not 0
     assert body["meta"]["cached"] is False
 
     second = client.get("/api/locations/1/current")

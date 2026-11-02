@@ -1,4 +1,4 @@
-"""/api/health — kiểm tra nhanh hệ thống khi demo/debug."""
+"""/api/health: quick system check."""
 import logging
 
 from fastapi import APIRouter
@@ -15,14 +15,14 @@ logger = logging.getLogger(__name__)
 @router.get(
     "/health",
     response_model=Envelope[Health],
-    summary="Trạng thái hệ thống",
-    description="Kiểm tra trạng thái kết nối cơ sở dữ liệu và số lượng bản ghi đang cache.",
+    summary="System status",
+    description="Database connectivity and number of cached entries.",
 )
 def health(session: SessionDep, service: WeatherServiceDep):
     try:
         session.exec(text("SELECT 1"))
         db_status = "ok"
-    except Exception as exc:  # noqa: BLE001 — health không được làm sập request
+    except Exception as exc:  # noqa: BLE001 - health must not fail the request
         logger.warning("DB health check failed: %s", exc)
         db_status = "error"
     return Envelope(data=Health(

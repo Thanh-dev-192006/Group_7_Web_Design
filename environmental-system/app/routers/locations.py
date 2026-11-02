@@ -1,4 +1,4 @@
-"""/api/locations — router mẫu, các router khác viết theo cùng pattern."""
+"""/api/locations."""
 from typing import Literal
 
 from fastapi import APIRouter, Query
@@ -15,13 +15,13 @@ router = APIRouter(prefix="/api/locations", tags=["locations"])
 @router.get(
     "",
     response_model=Envelope[list[LocationOut]],
-    summary="Danh sách địa điểm",
-    description="Danh sách các địa điểm hỗ trợ kèm tọa độ và vùng miền (lọc tùy chọn qua query region: north, central, south).",
+    summary="List locations",
+    description="Supported locations with coordinates and region (optional filter via query region: north, central, south).",
     responses=error_responses(400),
 )
 def list_locations(
     session: SessionDep,
-    region: Literal["north", "central", "south"] | None = Query(default=None, description="Lọc theo miền"),
+    region: Literal["north", "central", "south"] | None = Query(default=None, description="Filter by region"),
 ):
     statement = select(Location).order_by(Location.id)
     if region is not None:
@@ -36,8 +36,8 @@ def list_locations(
 @router.get(
     "/{location_id}",
     response_model=Envelope[LocationOut],
-    summary="Chi tiết một địa điểm",
-    description="Chi tiết một địa điểm theo ID (tên, slug, tọa độ, vùng miền).",
+    summary="Get a location",
+    description="A single location by ID (name, slug, coordinates, region).",
     responses=error_responses(400, 404),
 )
 def read_location(location: LocationDep):

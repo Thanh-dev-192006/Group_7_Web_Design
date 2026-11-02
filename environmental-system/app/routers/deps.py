@@ -1,4 +1,4 @@
-"""Dependency dùng chung giữa các router."""
+"""Dependencies shared by routers."""
 from typing import Annotated
 
 from fastapi import Depends, Path
@@ -14,7 +14,7 @@ WeatherServiceDep = Annotated[WeatherService, Depends(get_weather_service)]
 
 def get_location_or_404(
     session: SessionDep,
-    location_id: Annotated[int, Path(ge=1, description="ID địa điểm (từ GET /api/locations)")],
+    location_id: Annotated[int, Path(ge=1, description="Location ID (from GET /api/locations)")],
 ) -> Location:
     location = session.get(Location, location_id)
     if location is None:

@@ -1,12 +1,8 @@
-"""Client gọi Open-Meteo. Chỉ lo phần HTTP và trả JSON thô.
+"""Open-Meteo HTTP client; returns raw JSON (mapping to schemas is in app/services/weather.py).
 
-- Không cần API key. Tài liệu: https://open-meteo.com/en/docs
-  và https://open-meteo.com/en/docs/air-quality-api
-- Luôn gọi với `timezone=GMT` → mọi thời gian trả về là UTC (không kèm tz),
-  `UTCDatetime` trong schemas sẽ gắn tz khi serialize.
-- Lỗi mạng/timeout → UpstreamUnavailable (503); HTTP lỗi/JSON hỏng → UpstreamError (502).
-
-Việc chuyển JSON thô → schema của mình nằm ở app/services/weather.py.
+- No API key. Docs: https://open-meteo.com/en/docs and /en/docs/air-quality-api
+- Always `timezone=GMT`, so times are UTC without tz; `UTCDatetime` attaches it on serialize.
+- Network error/timeout -> UpstreamUnavailable (503); HTTP error/bad JSON -> UpstreamError (502).
 """
 import logging
 
@@ -17,7 +13,7 @@ from app.errors import UpstreamError, UpstreamUnavailable
 
 logger = logging.getLogger(__name__)
 
-# Biến xin từ Forecast API. Đổi ở đây nếu cần thêm/bớt trường.
+# Variables requested from the Forecast API.
 FORECAST_CURRENT_VARS = [
     "temperature_2m", "relative_humidity_2m", "apparent_temperature", "is_day",
     "precipitation", "weather_code", "wind_speed_10m", "wind_direction_10m",
@@ -27,7 +23,7 @@ FORECAST_DAILY_VARS = [
     "weather_code", "temperature_2m_max", "temperature_2m_min",
     "precipitation_sum", "precipitation_probability_max",
 ]
-# Biến xin từ Air Quality API (dự báo chất lượng không khí tối đa ~7 ngày)
+# Variables requested from the Air Quality API (forecast limited to ~7 days)
 AIR_CURRENT_VARS = ["pm2_5", "us_aqi"]
 AIR_HOURLY_VARS = ["pm2_5", "us_aqi"]
 
@@ -47,7 +43,7 @@ class OpenMeteoClient:
         except httpx.HTTPStatusError as exc:
             logger.warning("Open-Meteo HTTP %s: %s", exc.response.status_code, exc.response.text[:200])
             raise UpstreamError("Weather data source returned an error") from exc
-        except (httpx.HTTPError, ValueError) as exc:   # ValueError: JSON hỏng
+        except (httpx.HTTPError, ValueError) as exc:   # ValueError: invalid JSON
             logger.warning("Open-Meteo bad response: %s", exc)
             raise UpstreamError("Weather data source returned an invalid response") from exc
 

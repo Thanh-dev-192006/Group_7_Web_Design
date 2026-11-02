@@ -1,10 +1,6 @@
-"""Điểm vào ứng dụng.
+"""Application entry point; wiring only (routers, handlers, optional CORS, frontend).
 
-Chạy:  fastapi dev app/main.py   → http://127.0.0.1:8000  (web)
-                                    http://127.0.0.1:8000/docs  (Swagger)
-
-File này chỉ lắp ráp: router, exception handler, CORS (tùy chọn), frontend.
-Không viết logic nghiệp vụ ở đây.
+Run: fastapi dev app/main.py  ->  http://127.0.0.1:8000 (web), /docs (Swagger)
 """
 import logging
 from contextlib import asynccontextmanager
@@ -36,9 +32,9 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description=(
-        "API thời tiết và chất lượng không khí cho các thành phố Việt Nam. "
-        "Dữ liệu từ [Open-Meteo](https://open-meteo.com/). "
-        "Mọi response thành công có dạng `{data, meta}`, mọi lỗi có dạng `{error: {code, message}}`."
+        "Weather and air-quality API for Vietnamese cities. "
+        "Data from [Open-Meteo](https://open-meteo.com/). "
+        "Successful responses are `{data, meta}`; errors are `{error: {code, message}}`."
     ),
     lifespan=lifespan,
 )
@@ -60,8 +56,7 @@ app.include_router(health.router)
 
 
 def _custom_openapi():
-    """Bỏ response 422 mặc định của FastAPI khỏi Swagger,
-    vì lỗi validation được đổi thành 400 VALIDATION_ERROR (app/errors.py)."""
+    """Drop FastAPI's default 422 from Swagger; validation errors are returned as 400 VALIDATION_ERROR."""
     if app.openapi_schema:
         return app.openapi_schema
     schema = get_openapi(
@@ -78,7 +73,6 @@ def _custom_openapi():
 
 app.openapi = _custom_openapi
 
-# Frontend được phục vụ cùng origin → không cần CORS. Mount SAU cùng
-# để các route /api/* được ưu tiên.
+# Mounted last so /api/* routes take priority.
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -1,10 +1,7 @@
-"""Dữ liệu địa điểm ban đầu. Chạy tự động khi app khởi động (idempotent).
+"""Initial locations, seeded idempotently on startup (manually: python -m app.seed).
 
-Chạy tay: python -m app.seed
-
-Đây là các ĐIỂM ĐO theo thành phố (tọa độ trung tâm), không phải ranh giới
-tỉnh — nên không bị ảnh hưởng khi địa giới hành chính thay đổi.
-Thêm/bớt địa điểm: sửa LOCATIONS, giữ `slug` không đổi cho điểm đã có.
+These are city-centre measurement points, not province boundaries. Keep `slug`
+stable for existing entries when editing LOCATIONS.
 """
 from sqlmodel import Session, select
 
@@ -30,7 +27,7 @@ LOCATIONS: list[dict] = [
 
 
 def seed_locations(session: Session) -> int:
-    """Thêm các địa điểm chưa có (theo slug). Trả số bản ghi mới."""
+    """Add locations missing by slug; return the number added."""
     existing = set(session.exec(select(Location.slug)).all())
     new = [Location(**item) for item in LOCATIONS if item["slug"] not in existing]
     session.add_all(new)
