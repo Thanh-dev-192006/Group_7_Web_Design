@@ -1,24 +1,19 @@
-"""GĐ2 — Collector thu thập định kỳ (CHƯA làm).
+"""Phase 2: periodic collector (NOT implemented). Will run as a separate process: python -m collector.run
 
-Chạy như một tiến trình RIÊNG, độc lập với API:
-    python -m collector.run
+Plan:
+1. Uncomment the `Reading` model in app/models.py.
+2. Add `APScheduler>=3.10,<4` to requirements.txt (4.x changed the API).
+3. Every 30-60 min, for each Location call OpenMeteoClient, compute is_anomaly, store a Reading (UTC).
+4. Anomaly rule: PM2.5 up >50% vs the mean of the last 3-5 readings AND above a minimum absolute
+   threshold, or us_aqi > 150. Implement as a pure function in app/services/anomaly.py.
+5. Wrap each call in try/except + log so one location's failure doesn't stop the round.
 
-Kế hoạch (xem claude/project-context.md, mục 3):
-1. Bỏ comment model `Reading` trong app/models.py.
-2. Thêm `APScheduler>=3.10,<4` vào requirements.txt (bản 4.x đổi API).
-3. Mỗi 30–60 phút: với từng Location, gọi OpenMeteoClient (app/services/open_meteo.py),
-   lấy giá trị hiện tại, tính is_anomaly, ghi một Reading (thời gian UTC).
-4. Anomaly rule: PM2.5 tăng > 50% so với trung bình 3–5 lần đọc gần nhất
-   VÀ vượt ngưỡng tuyệt đối tối thiểu; hoặc us_aqi > 150.
-   → viết thành hàm thuần (pure function) trong app/services/anomaly.py để test dễ.
-5. Mỗi lần gọi bọc try/except + log, lỗi một địa điểm không dừng cả vòng.
-
-Dùng lại engine từ app/database.py (đã bật WAL).
+Reuse the engine from app/database.py (WAL enabled).
 """
 
 
 def main() -> None:
-    raise SystemExit("Collector chưa được triển khai (GĐ2). Xem docstring của collector/run.py.")
+    raise SystemExit("Collector is not implemented yet (phase 2). See the docstring of collector/run.py.")
 
 
 if __name__ == "__main__":

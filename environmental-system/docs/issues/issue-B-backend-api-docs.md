@@ -1,3 +1,5 @@
+> Tài liệu giao việc (lịch sử) — nếu mâu thuẫn với README.md thì theo README.md.
+
 # [B] Backend: endpoint `GET /api/current`, Swagger ví dụ, test lỗi, tài liệu, README
 
 **Người phụ trách:** B · **Nhãn:** `backend` `api` `docs` · **Branch:** `feat/backend-current-all` (tách thêm `docs/readme-root` nếu muốn PR nhỏ)
@@ -13,7 +15,7 @@
 
 ### 0.1 Dự án
 Web dự báo thời tiết + chất lượng không khí (AQI) cho 15 thành phố Việt Nam. Môn Web Design and Programming, nhóm 4 người.
-Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`hero-api/`** (mọi đường dẫn dưới đây tính từ `hero-api/`).
+Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`environmental-system/`** (mọi đường dẫn dưới đây tính từ `environmental-system/`).
 
 - Backend: FastAPI + SQLModel + SQLite, lấy dữ liệu từ Open-Meteo (không tự huấn luyện mô hình), cache 15 phút. Chạy: `fastapi dev app/main.py` → http://127.0.0.1:8000, Swagger `/docs`.
 - Frontend: HTML/CSS/JS **thuần** (ES modules, không framework, không bundler, không npm) + Leaflet + Chart.js (nạp bằng `<script>` CDN trong `index.html`, dùng qua biến toàn cục `L` và `Chart`). Do FastAPI phục vụ cùng origin.
@@ -147,8 +149,8 @@ def current_many(self, locations: list[Location]) -> list[CurrentSummary]:
 
 ### 2.6 Tài liệu
 - **`docs/API.md`:** thêm mục `GET /api/current` (mô tả, ví dụ JSON lấy từ `mock/current-all.json`, lưu ý "địa điểm lỗi bị bỏ qua"), thêm vào bảng endpoint. Rà lại toàn bộ file khớp `app/schemas.py`.
-- **`README.md` (gốc repo `Group_7_Web_Design/README.md`, hiện vẫn là mô tả đề B3):** viết lại gồm: mô tả ngắn, ảnh/ghi chú giao diện (để trống chỗ ảnh), kiến trúc (sơ đồ ASCII: Frontend → FastAPI → cache → Open-Meteo), cách chạy (copy từ `hero-api/README.md`), link `hero-api/docs/API.md`, thành viên (để trống tên), nguồn tham khảo (hero-api lab reference solution — đã nêu trong `hero-api/README.md`), attribution Open-Meteo (CC BY 4.0). Tiếng Việt.
-- **`hero-api/README.md`:** cập nhật bảng "Trạng thái hiện tại" khi PR xong.
+- **`README.md` (gốc repo `Group_7_Web_Design/README.md`, hiện vẫn là mô tả đề B3):** viết lại gồm: mô tả ngắn, ảnh/ghi chú giao diện (để trống chỗ ảnh), kiến trúc (sơ đồ ASCII: Frontend → FastAPI → cache → Open-Meteo), cách chạy (copy từ `environmental-system/README.md`), link `environmental-system/docs/API.md`, thành viên (để trống tên), nguồn tham khảo (hero-api lab reference solution — đã nêu trong `environmental-system/README.md`), attribution Open-Meteo (CC BY 4.0). Tiếng Việt.
+- **`environmental-system/README.md`:** cập nhật bảng "Trạng thái hiện tại" khi PR xong.
 
 ### 2.7 Dọn dẹp
 - Xóa `scripts/cleanup-hero-template.ps1` (đã dùng xong). **Giữ** `scripts/check_open_meteo.py`.

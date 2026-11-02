@@ -1,9 +1,7 @@
-// Cấu hình frontend.
-// - API_BASE rỗng = gọi cùng origin (frontend do FastAPI phục vụ).
-//   Nếu chạy frontend bằng Live Server (port 5500) thì đặt "http://127.0.0.1:8000"
-//   và bật CORS_ORIGINS trong .env của backend.
-// - Mock mode: thêm ?mock=1 vào URL để dùng frontend/mock/*.json (không cần backend
-//   làm xong phần thời tiết). Dữ liệu mock luôn là của địa điểm id=1.
+// Frontend configuration.
+// - Empty API_BASE = same origin (FastAPI serves the frontend). With Live Server (port 5500),
+//   set "http://127.0.0.1:8000" and enable CORS_ORIGINS in the backend .env.
+// - Mock mode: add ?mock=1 to the URL to use frontend/mock/*.json. Mock data is always for location id=1.
 const params = new URLSearchParams(window.location.search);
 
 export const CONFIG = {
@@ -11,7 +9,7 @@ export const CONFIG = {
     USE_MOCK: params.get("mock") === "1",
     FORECAST_HOURS: 48,
     FORECAST_DAYS: 7,
-    REFRESH_MINUTES: 10,            // làm mới thẻ hiện tại + màu marker (issue C)
-    REQUEST_TIMEOUT_MS: 25000,      // cache nguội: backend gọi 2 upstream tuần tự, mỗi cái timeout 10 s (httpx)
-    TIMEZONE: "Asia/Ho_Chi_Minh",   // API trả UTC, hiển thị theo giờ VN
+    REFRESH_MINUTES: 10,            // refresh interval for the current card + marker colours
+    REQUEST_TIMEOUT_MS: 25000,      // cold cache: backend calls 2 upstreams in sequence, each with a 10 s httpx timeout
+    TIMEZONE: "Asia/Ho_Chi_Minh",   // API returns UTC; display in Vietnam time
 };

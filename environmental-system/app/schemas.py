@@ -1,7 +1,5 @@
-"""Hợp đồng API (request/response). Frontend code theo file này + docs/API.md.
-
-QUY TẮC: đổi bất kỳ schema nào ở đây thì phải cập nhật cùng lúc
-`docs/API.md` và `frontend/mock/*.json` trong cùng một PR.
+"""API contract (responses). Changing any schema here requires updating
+`docs/API.md` and `frontend/mock/*.json` in the same PR.
 """
 from datetime import date, datetime, timezone
 from enum import Enum
@@ -10,10 +8,9 @@ from typing import Annotated, Generic, TypeVar
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 
-# ---------- Kiểu dùng chung ----------
+# ---------- Shared types ----------
 def _ensure_utc(value: datetime) -> datetime:
-    """SQLite và Open-Meteo (timezone=GMT) trả datetime không có tzinfo.
-    Quy ước: mọi datetime là UTC → gắn tzinfo để JSON ra dạng `...Z`."""
+    """SQLite and Open-Meteo (timezone=GMT) return naive datetimes; all datetimes are UTC, so attach tzinfo to serialize as `...Z`."""
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
@@ -31,12 +28,12 @@ T = TypeVar("T")
 
 class Meta(BaseModel):
     generated_at: UTCDatetime = Field(default_factory=utc_now)
-    count: int | None = None        # số phần tử khi `data` là list
-    cached: bool | None = None      # True nếu lấy từ cache, không gọi Open-Meteo
+    count: int | None = None        # item count when `data` is a list
+    cached: bool | None = None      # True if served from cache without calling Open-Meteo
 
 
 class Envelope(BaseModel, Generic[T]):
-    """Mọi response thành công: { "data": ..., "meta": {...} }."""
+    """Every successful response: { "data": ..., "meta": {...} }."""
     data: T
     meta: Meta = Field(default_factory=Meta)
 
@@ -60,13 +57,13 @@ class ErrorBody(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    """Mọi response lỗi: { "error": { "code", "message", "details"? } }."""
+    """Every error response: { "error": { "code", "message", "details"? } }."""
     error: ErrorBody
 
 
 # ---------- AQI ----------
 class AqiCategory(str, Enum):
-    """Thang US EPA, tính từ `us_aqi` (xem app/services/aqi.py)."""
+    """US EPA scale, derived from `us_aqi` (see app/services/aqi.py)."""
     good = "good"
     moderate = "moderate"
     unhealthy_sensitive = "unhealthy_sensitive"
@@ -103,7 +100,7 @@ class LocationOut(BaseModel):
 
 # ---------- Weather ----------
 class CurrentWeather(BaseModel):
-    """Thời tiết + AQI hiện tại của một địa điểm. Giá trị thiếu là null."""
+    """Current weather + AQI for a location; missing values are null."""
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
@@ -134,7 +131,7 @@ class CurrentWeather(BaseModel):
     wind_speed_kmh: float | None = None
     wind_direction_deg: float | None = None
     precipitation_mm: float | None = None
-    weather_code: int | None = Field(default=None, description="Mã thời tiết WMO")
+    weather_code: int | None = Field(default=None, description="WMO weather code")
     is_day: bool | None = None
     pm2_5: float | None = Field(default=None, description="µg/m³")
     us_aqi: float | None = None
@@ -142,7 +139,7 @@ class CurrentWeather(BaseModel):
 
 
 class CurrentSummary(BaseModel):
-    """Tóm tắt thời tiết + AQI một địa điểm (dùng tô màu bản đồ). Giá trị thiếu là null."""
+    """Weather + AQI summary for a location (used to color the map); missing values are null."""
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
@@ -162,7 +159,7 @@ class CurrentSummary(BaseModel):
     location_id: int
     observed_at: UTCDatetime
     temperature_c: float | None = None
-    weather_code: int | None = Field(default=None, description="Mã thời tiết WMO")
+    weather_code: int | None = Field(default=None, description="WMO weather code")
     is_day: bool | None = None
     us_aqi: float | None = None
     aqi_category: AqiCategory | None = None
@@ -180,7 +177,7 @@ class HourlyPoint(BaseModel):
 
 
 class DailyPoint(BaseModel):
-    date: date  # ngày theo UTC
+    date: date  # UTC date
     temperature_max_c: float | None = None
     temperature_min_c: float | None = None
     precipitation_sum_mm: float | None = None

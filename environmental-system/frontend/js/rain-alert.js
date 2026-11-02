@@ -1,4 +1,4 @@
-// Cảnh báo mưa trong các giờ tới (logic thuần, không phụ thuộc DOM/config).
+// Rain alert for the coming hours (pure logic, no DOM/config dependency).
 const isRainCode = (code) => (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95 && code <= 99);
 const isStormCode = (code) => code >= 95 && code <= 99;
 
@@ -14,20 +14,20 @@ export function rainAlert(hourly, { windowHours = 12, threshold = 60 } = {}) {
                 level: isStormCode(code) ? "storm" : "rain",
                 time: point.time,
                 probability: probability ?? null,
-                byProbability: likely,   // true: xác suất đạt ngưỡng nên mới hiện %
+                byProbability: likely,   // true only when probability reached the threshold, so the % is shown
             };
         }
     }
     return { level: "none" };
 }
 
-// Nội dung banner; formatTime nhận từ bên ngoài (fmt.time).
+// Banner text; formatTime is injected (fmt.time).
 export function rainAlertText(alert, formatTime) {
     if (!alert) return "";
-    if (alert.level === "storm") return `⛈ Có dông lúc ${formatTime(alert.time)}`;
+    if (alert.level === "storm") return `⛈ Thunderstorm expected at ${formatTime(alert.time)}`;
     if (alert.level === "rain") {
         const chance = alert.byProbability && alert.probability != null ? ` (${Math.round(alert.probability)}%)` : "";
-        return `☔ Có khả năng mưa lúc ${formatTime(alert.time)}${chance}`;
+        return `☔ Rain likely at ${formatTime(alert.time)}${chance}`;
     }
-    return "Không có mưa đáng kể trong 12 giờ tới";
+    return "No significant rain in the next 12 hours";
 }

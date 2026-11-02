@@ -6,7 +6,7 @@ Spec: no separate spec — this plan is the authority. Source: code review on 20
 ## Global Constraints
 
 - Python 3.12, FastAPI, SQLModel. Run backend tests with
-  `../hero-api/.venv/Scripts/python.exe -m pytest` from `environmental-system/` (that venv has all deps).
+  `.venv/Scripts/python.exe -m pytest` from `environmental-system/` (that venv has all deps).
 - Frontend: plain ES modules, no framework, no bundler, no new npm dependencies.
   Pure-logic JS modules get unit tests with Node's built-in runner: `node --test frontend/tests/`
   (Node v24 available). Test files: `frontend/tests/*.test.mjs`. A module that is unit-tested must

@@ -1,4 +1,4 @@
-"""Test các thành phần dùng chung: AQI, cache, lỗi, health, OpenAPI, frontend."""
+"""Shared components: AQI, cache, errors, health, OpenAPI, frontend."""
 import pytest
 
 from app.schemas import AqiCategory

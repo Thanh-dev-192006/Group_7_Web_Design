@@ -1,8 +1,4 @@
-"""Cache trong bộ nhớ có thời hạn (TTL), an toàn khi nhiều request đồng thời.
-
-Đủ cho 1 tiến trình uvicorn. Nếu sau này chạy nhiều worker thì mỗi worker
-có cache riêng — chấp nhận được ở quy mô đồ án.
-"""
+"""Thread-safe in-memory TTL cache. Per-process: with multiple workers each has its own cache."""
 import threading
 import time
 from collections.abc import Callable
@@ -12,12 +8,12 @@ from typing import Any
 class TTLCache:
     def __init__(self, ttl_seconds: float, clock: Callable[[], float] = time.monotonic):
         self.ttl = ttl_seconds
-        self._clock = clock          # inject được trong test để giả lập thời gian
+        self._clock = clock          # injectable so tests can fake time
         self._data: dict[Any, tuple[float, Any]] = {}
         self._lock = threading.Lock()
 
     def get(self, key) -> tuple[bool, Any]:
-        """Trả (hit, value). hit=False nếu không có hoặc đã hết hạn."""
+        """Return (hit, value); hit is False if missing or expired."""
         with self._lock:
             item = self._data.get(key)
             if item is None:
@@ -33,8 +29,7 @@ class TTLCache:
             self._data[key] = (self._clock() + self.ttl, value)
 
     def get_or_set(self, key, factory: Callable[[], Any]) -> tuple[Any, bool]:
-        """Trả (value, cached). Gọi `factory()` khi cache miss.
-        Nếu factory raise lỗi thì không lưu gì vào cache."""
+        """Return (value, cached); call `factory()` on a miss. Nothing is stored if it raises."""
         hit, value = self.get(key)
         if hit:
             return value, True

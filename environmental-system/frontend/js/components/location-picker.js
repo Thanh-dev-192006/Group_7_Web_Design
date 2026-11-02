@@ -1,5 +1,5 @@
-// Dropdown chọn địa điểm, nhóm theo miền.
-const REGION_LABELS = { north: "Miền Bắc", central: "Miền Trung", south: "Miền Nam" };
+// Location dropdown, grouped by region.
+const REGION_LABELS = { north: "North", central: "Central", south: "South" };
 
 export function renderLocationPicker(select, locations, { selectedId, onChange }) {
     select.replaceChildren();

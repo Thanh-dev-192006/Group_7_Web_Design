@@ -1,4 +1,4 @@
-// Biểu đồ nhiệt độ và xác suất mưa theo giờ.
+// Hourly temperature and rain-probability chart.
 import { fmt } from "../format.js";
 import { rainAlert, rainAlertText } from "../rain-alert.js";
 import { el, setState } from "../ui.js";
@@ -21,11 +21,11 @@ export function renderHourly(container, hourly) {
     destroyHourlyChart();
 
     if (!Array.isArray(hourly) || hourly.length === 0) {
-        setState(container, "empty", "Không có dữ liệu dự báo theo giờ");
+        setState(container, "empty", "No hourly forecast data");
         return;
     }
     if (typeof Chart === "undefined") {
-        setState(container, "error", "Không tải được thư viện biểu đồ.");
+        setState(container, "error", "Could not load the chart library.");
         appendRainAlert(container, hourly);
         return;
     }
@@ -33,11 +33,11 @@ export function renderHourly(container, hourly) {
     const temperatures = hourly.map((point) => point.temperature_c);
     const validTemperatures = temperatures.filter((value) => value != null && Number.isFinite(Number(value)));
     const summary = validTemperatures.length
-        ? `, cao nhất ${fmt.num(Math.max(...validTemperatures), "°C")}, thấp nhất ${fmt.num(Math.min(...validTemperatures), "°C")}`
+        ? `, high ${fmt.num(Math.max(...validTemperatures), "°C")}, low ${fmt.num(Math.min(...validTemperatures), "°C")}`
         : "";
     const canvas = el("canvas", {
         role: "img",
-        ariaLabel: `Biểu đồ nhiệt độ và khả năng mưa ${hourly.length} giờ tới${summary}`,
+        ariaLabel: `Temperature and chance of rain chart for the next ${hourly.length} hours${summary}`,
     });
     const wrapper = el("div", { className: "chart" }, canvas);
     setState(container, "ready");
@@ -57,7 +57,7 @@ export function renderHourly(container, hourly) {
             datasets: [
                 {
                     type: "line",
-                    label: "Nhiệt độ (°C)",
+                    label: "Temperature (°C)",
                     data: temperatures,
                     yAxisID: "y",
                     borderColor: primary,
@@ -70,7 +70,7 @@ export function renderHourly(container, hourly) {
                 },
                 {
                     type: "bar",
-                    label: "Khả năng mưa (%)",
+                    label: "Chance of rain (%)",
                     data: hourly.map((point) => point.precipitation_probability_pct),
                     yAxisID: "y1",
                     backgroundColor: rainColor,
@@ -107,12 +107,12 @@ export function renderHourly(container, hourly) {
                 },
                 y: {
                     type: "linear", position: "left",
-                    title: { display: true, text: "Nhiệt độ (°C)", color: muted },
+                    title: { display: true, text: "Temperature (°C)", color: muted },
                     ticks: { color: muted }, grid: { color: border },
                 },
                 y1: {
                     type: "linear", position: "right", min: 0, max: 100,
-                    title: { display: true, text: "Khả năng mưa (%)", color: muted },
+                    title: { display: true, text: "Chance of rain (%)", color: muted },
                     ticks: { color: muted, callback: (value) => `${value}%` },
                     grid: { drawOnChartArea: false, color: border },
                 },

@@ -1,8 +1,4 @@
-"""Kết nối SQLite và dependency session.
-
-- `get_session` là dependency được override trong test (xem tests/conftest.py).
-- Bảng được tạo bằng `create_all` (không dùng Alembic ở giai đoạn này).
-"""
+"""SQLite engine and session dependency (`get_session` is overridden in tests). Tables use `create_all`, no Alembic."""
 from typing import Annotated
 
 from fastapi import Depends
@@ -14,7 +10,7 @@ from app.config import settings
 
 
 def make_engine(url: str, **kwargs) -> Engine:
-    """Tạo engine; với SQLite bật WAL + foreign keys cho mỗi connection."""
+    """Create the engine; for SQLite enable WAL and foreign keys on every connection."""
     is_sqlite = url.startswith("sqlite")
     connect_args = {"check_same_thread": False} if is_sqlite else {}
     engine = create_engine(url, connect_args=connect_args, **kwargs)
@@ -23,7 +19,7 @@ def make_engine(url: str, **kwargs) -> Engine:
         @event.listens_for(engine, "connect")
         def _sqlite_pragmas(dbapi_conn, _record):
             cursor = dbapi_conn.cursor()
-            # WAL: collector (GĐ2) ghi trong khi API đọc mà không bị khóa.
+            # WAL so a future collector (phase 2) can write while the API reads.
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
@@ -35,7 +31,7 @@ engine = make_engine(settings.database_url)
 
 
 def init_db(target: Engine = engine) -> None:
-    # Import để SQLModel biết các bảng trước khi create_all.
+    # Import so SQLModel registers the tables before create_all.
     from app import models  # noqa: F401
 
     SQLModel.metadata.create_all(target)

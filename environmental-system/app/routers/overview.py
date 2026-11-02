@@ -1,4 +1,4 @@
-"""/api/current — tóm tắt thời tiết + AQI mọi địa điểm."""
+"""/api/current: weather + AQI summary for all locations."""
 from fastapi import APIRouter
 from sqlmodel import select
 
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/api", tags=["weather"])
 @router.get(
     "/current",
     response_model=Envelope[list[CurrentSummary]],
-    summary="Tóm tắt thời tiết + AQI mọi địa điểm",
-    description="Thời tiết và AQI tóm tắt của tất cả địa điểm trong một lần gọi (dùng để tô màu marker bản đồ). Địa điểm lỗi bị bỏ qua.",
+    summary="Weather + AQI summary for all locations",
+    description="Summary weather and AQI for every location in one call (used to color map markers). Locations that fail are skipped.",
     responses=error_responses(502, 503),
 )
 def current_all(session: SessionDep, service: WeatherServiceDep):

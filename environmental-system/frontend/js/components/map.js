@@ -1,12 +1,12 @@
-// Bản đồ Leaflet với một marker cho mỗi địa điểm.
+// Leaflet map with one marker per location.
 import { AQI_LEVELS, aqiInfo } from "../aqi.js";
 import { fmt } from "../format.js";
 import { el, setState } from "../ui.js";
 
 const VIETNAM_CENTER = [16.0, 106.5];
 
-// Nguồn ô bản đồ: thử lần lượt. OpenStreetMap có thể từ chối ô (403) khi trình duyệt/extension
-// không gửi Referer, hoặc bị chặn bởi mạng/ad-block → tự chuyển sang nguồn dự phòng.
+// Tile sources, tried in order. OpenStreetMap can reject tiles (403) when the browser/extension omits
+// the Referer, or the network/ad-blocker blocks it, so we fall back to the next source.
 const TILE_SOURCES = [
     {
         url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -28,14 +28,14 @@ const TILE_ERRORS_BEFORE_FALLBACK = 3;
 
 function addBaseLayer(map, sourceIndex = 0) {
     const source = TILE_SOURCES[sourceIndex];
-    // referrerPolicy: gửi origin của trang làm Referer (OSM yêu cầu có Referer hợp lệ).
+    // referrerPolicy sends the page origin as Referer (OSM requires a valid one).
     const layer = L.tileLayer(source.url, { referrerPolicy: "origin", ...source.options }).addTo(map);
 
     let errors = 0;
     layer.on("tileerror", () => {
         errors += 1;
         if (errors === TILE_ERRORS_BEFORE_FALLBACK && sourceIndex + 1 < TILE_SOURCES.length) {
-            console.warn(`Không tải được ô bản đồ từ nguồn #${sourceIndex + 1}, chuyển sang nguồn dự phòng.`);
+            console.warn(`Map tiles failed to load from source #${sourceIndex + 1}; switching to the fallback source.`);
             map.removeLayer(layer);
             addBaseLayer(map, sourceIndex + 1);
         }
@@ -45,7 +45,7 @@ function addBaseLayer(map, sourceIndex = 0) {
 
 export function createMap(container, locations, { onSelect }) {
     if (typeof L === "undefined") {
-        setState(container, "error", "Không tải được thư viện bản đồ. Bạn vẫn có thể chọn địa điểm bằng danh sách.");
+        setState(container, "error", "Could not load the map library. You can still pick a location from the list.");
         container.classList.add("map");
         return null;
     }
@@ -55,10 +55,11 @@ export function createMap(container, locations, { onSelect }) {
     const map = L.map(container, { scrollWheelZoom: false }).setView(VIETNAM_CENTER, 5);
     addBaseLayer(map);
 
+    let legendNode = null;
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = () => {
         const node = el("section", { className: "map-legend" },
-            el("h2", { className: "map-legend__title" }, "Chỉ số AQI"),
+            el("h2", { className: "map-legend__title" }, "AQI scale"),
             ...[...Object.keys(AQI_LEVELS), null].map((category) => {
                 const info = aqiInfo(category);
                 const swatch = el("span", { className: "map-legend__swatch" });
@@ -69,6 +70,7 @@ export function createMap(container, locations, { onSelect }) {
         );
         L.DomEvent.disableClickPropagation(node);
         L.DomEvent.disableScrollPropagation(node);
+        legendNode = node;
         return node;
     };
     legend.addTo(map);
@@ -77,7 +79,7 @@ export function createMap(container, locations, { onSelect }) {
     const names = new Map(locations.map((loc) => [loc.id, loc.name]));
     const markerBorder = getComputedStyle(document.documentElement).getPropertyValue("--map-marker-border").trim();
     for (const loc of locations) {
-        const tooltip = el("span", {}, `${loc.name} · AQI không có dữ liệu`);
+        const tooltip = el("span", {}, `${loc.name} · AQI no data`);
         const marker = L.circleMarker([loc.lat, loc.lon], {
             radius: 8, weight: 2, color: markerBorder, fillColor: aqiInfo(null).color, fillOpacity: 0.9,
         })
@@ -100,6 +102,29 @@ export function createMap(container, locations, { onSelect }) {
         markers.set(loc.id, marker);
     }
 
+    // Frame all cities above the legend; re-frame on container resize until the user pans or zooms.
+    const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lon]));
+    let fitting = false;
+    let userMoved = false;
+    map.on("zoomstart dragstart", () => { if (!fitting) userMoved = true; });
+    const fitCities = () => {
+        fitting = true;
+        map.fitBounds(bounds, {
+            paddingTopLeft: [24, 24],
+            paddingBottomRight: [24, (legendNode?.offsetHeight ?? 0) + 24],
+            animate: false,
+        });
+        fitting = false;
+    };
+    fitCities();
+    // Leaflet only tracks window resizes; the sidebar grows when the content column loads.
+    if (typeof ResizeObserver !== "undefined") {
+        new ResizeObserver(() => {
+            map.invalidateSize();
+            if (!userMoved) fitCities();
+        }).observe(container);
+    }
+
     function setMarkerAqi(locationId, category) {
         markers.get(locationId)?.setStyle({ fillColor: aqiInfo(category).color });
     }
@@ -117,14 +142,14 @@ export function createMap(container, locations, { onSelect }) {
         },
         setMarkerAqi,
         setAllMarkers(items) {
-            // Xóa màu cũ nếu bản tóm tắt mới không còn dữ liệu cho địa điểm đó.
+            // Clear the old colour if the new summary has no data for that location.
             const summaries = new Map(items.map((item) => [item.location_id, item]));
             markers.forEach((marker, id) => {
                 const item = summaries.get(id);
                 const category = item?.aqi_category ?? null;
                 setMarkerAqi(id, category);
                 const description = item?.us_aqi == null
-                    ? "không có dữ liệu"
+                    ? "no data"
                     : `${fmt.num(item.us_aqi)} · ${aqiInfo(category).label}`;
                 const tooltip = el("span", {}, `${names.get(id)} · AQI ${description}`);
                 marker.setTooltipContent(tooltip);

@@ -5,13 +5,13 @@ __pycache__/
 .pytest_cache/
 pytest-cache-files-*/
 
-# Dữ liệu & bí mật
+# Data and secrets
 *.db
 *.db-shm
 *.db-wal
 .env
 
-# Công cụ cá nhân
+# Personal tools
 .vscode/
 .idea/
 .claude/

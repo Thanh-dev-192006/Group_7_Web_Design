@@ -144,13 +144,13 @@ Ghi chú:
 - Dữ liệu bắt đầu từ **giờ hiện tại** (UTC, làm tròn xuống giờ). `hours` tối đa 168 = 7 ngày, nên `days` cũng tối đa 7 (Air Quality API của Open-Meteo chỉ dự báo được ~7 ngày).
 - Mọi tổ hợp `hours`/`days` dùng chung một bản cache (15 phút) theo địa điểm.
 - Nếu Air Quality API lỗi hoặc ngắn hơn dự báo thời tiết, các giờ tương ứng có `pm2_5`, `us_aqi`, `aqi_category` là `null` (thời tiết vẫn trả bình thường). `current` cũng vậy.
-- `daily[].date` là ngày theo **UTC**; ngày Việt Nam (UTC+7) bắt đầu lúc 17:00 UTC hôm trước, nên các giờ cuối ngày có thể thuộc `date` kế tiếp khi so với giờ VN.
+- `daily[].date` là ngày theo **UTC**; ngày Việt Nam (UTC+7) bắt đầu lúc 17:00 UTC hôm trước, nên từ 00:00 đến 06:59 giờ VN vẫn thuộc ngày UTC hôm trước; trong khoảng đó thẻ đầu tiên của dự báo ngày là ngày VN của hôm qua.
 
 ---
 
 ### `GET /api/health`
 
-Trạng thái hệ thống (DB và số lượng bản ghi trong cache).
+Trạng thái hệ thống (DB và số lượng bản ghi trong cache). `status` là `"ok"` hoặc `"degraded"`; `database` là `"ok"` hoặc `"error"`. Khi kiểm tra DB (`SELECT 1`) lỗi, endpoint vẫn trả 200 với `status: "degraded"` và `database: "error"`.
 
 ```json
 { "data": { "status": "ok", "version": "0.1.0", "database": "ok", "cache_entries": 3 }, "meta": { "generated_at": "2026-10-21T03:00:00Z", "count": null, "cached": null } }
@@ -160,14 +160,14 @@ Trạng thái hệ thống (DB và số lượng bản ghi trong cache).
 
 ## `aqi_category` (thang US EPA, theo `us_aqi`)
 
-| Giá trị | Khoảng `us_aqi` | Nhãn hiển thị | Màu |
+| Giá trị | Khoảng `us_aqi` | Nhãn hiển thị (`frontend/js/aqi.js`; không có giá trị → "No data") | Màu |
 |---|---|---|---|
-| `good` | 0–50 | Tốt | `#00e400` |
-| `moderate` | 51–100 | Trung bình | `#ffff00` |
-| `unhealthy_sensitive` | 101–150 | Kém (nhóm nhạy cảm) | `#ff7e00` |
-| `unhealthy` | 151–200 | Xấu | `#ff0000` |
-| `very_unhealthy` | 201–300 | Rất xấu | `#8f3f97` |
-| `hazardous` | > 300 | Nguy hại | `#7e0023` |
+| `good` | 0–50 | Good | `#00e400` |
+| `moderate` | 51–100 | Moderate | `#ffff00` |
+| `unhealthy_sensitive` | 101–150 | Unhealthy for Sensitive Groups | `#ff7e00` |
+| `unhealthy` | 151–200 | Unhealthy | `#ff0000` |
+| `very_unhealthy` | 201–300 | Very Unhealthy | `#8f3f97` |
+| `hazardous` | > 300 | Hazardous | `#7e0023` |
 
 ## Mã lỗi
 
@@ -191,4 +191,4 @@ Ví dụ:
 
 ## GĐ2 (dự kiến, chưa có)
 
-`GET /api/readings/latest`, `GET /api/locations/{id}/readings?from=&to=&limit=`, `GET /api/anomalies?limit=` — xem `claude/project-context.md`.
+`GET /api/readings/latest`, `GET /api/locations/{id}/readings?from=&to=&limit=`, `GET /api/anomalies?limit=` — xem phần này và [`README.md`](../README.md).

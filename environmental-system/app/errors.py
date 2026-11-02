@@ -1,7 +1,7 @@
-"""Lỗi của ứng dụng và exception handler.
+"""App errors and exception handlers.
 
-Mọi lỗi trả ra ĐỀU có dạng { "error": { "code", "message", "details"? } }.
-Trong code: raise một subclass của AppError, không raise HTTPException trực tiếp.
+Every error response has the shape { "error": { "code", "message", "details"? } };
+raise an AppError subclass, never HTTPException directly.
 """
 import logging
 
@@ -34,34 +34,34 @@ class NotFoundError(AppError):
 
 
 class UpstreamError(AppError):
-    """Open-Meteo trả lỗi hoặc dữ liệu không đọc được."""
+    """Open-Meteo returned an error or unreadable data."""
     status_code = 502
     code = "UPSTREAM_ERROR"
 
 
 class UpstreamUnavailable(AppError):
-    """Không kết nối được / timeout khi gọi Open-Meteo."""
+    """Open-Meteo unreachable or timed out."""
     status_code = 503
     code = "UPSTREAM_UNAVAILABLE"
 
 
 class NotImplementedFeature(AppError):
-    """Dùng cho phần chưa làm xong, để frontend nhận lỗi rõ ràng thay vì 500."""
+    """For unfinished features, so the frontend gets a clear error instead of a 500."""
     status_code = 501
     code = "NOT_IMPLEMENTED"
 
 
-# Dùng trong `responses=` của route để Swagger hiển thị đúng các lỗi.
+# For route `responses=` so Swagger documents the errors.
 def error_responses(*status_codes: int) -> dict:
     descriptions = {
-        400: "Tham số không hợp lệ",
-        404: "Không tìm thấy",
-        501: "Chưa được triển khai",
-        502: "Nguồn dữ liệu trả lỗi",
-        503: "Không kết nối được nguồn dữ liệu",
+        400: "Invalid parameters",
+        404: "Not found",
+        501: "Not implemented",
+        502: "Upstream data source returned an error",
+        503: "Upstream data source unreachable",
     }
     return {
-        code: {"model": ErrorResponse, "description": descriptions.get(code, "Lỗi")}
+        code: {"model": ErrorResponse, "description": descriptions.get(code, "Error")}
         for code in status_codes
     }
 

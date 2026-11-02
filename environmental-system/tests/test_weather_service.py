@@ -1,4 +1,4 @@
-"""Test WeatherService thật với payload Open-Meteo giả (httpx.MockTransport) — không gọi mạng."""
+"""Real WeatherService against fake Open-Meteo payloads (httpx.MockTransport); no network."""
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -10,9 +10,9 @@ from app.services.cache import TTLCache
 from app.services.open_meteo import OpenMeteoClient
 from app.services.weather import WeatherService
 
-# "Bây giờ" cố định: 2026-10-28 14:30 UTC → dự báo phải bắt đầu từ 14:00.
+# Fixed "now": 2026-10-28 14:30 UTC, so the forecast must start at 14:00.
 NOW = datetime(2026, 10, 28, 14, 30, tzinfo=timezone.utc)
-FIRST_HOUR = datetime(2026, 10, 28, 0, 0)          # payload bắt đầu từ 00:00 cùng ngày
+FIRST_HOUR = datetime(2026, 10, 28, 0, 0)          # payload starts at 00:00 the same day
 LOCATION = Location(id=1, name="Hà Nội", slug="ha-noi", region="north", lat=21.0, lon=105.8)
 
 
@@ -102,7 +102,7 @@ def test_current_survives_air_quality_failure():
 
 def test_forecast_starts_at_current_hour_and_has_168_points():
     data, _ = make_service(ok_handler()).forecast(LOCATION, hours=168, days=7)
-    # payload 192 giờ (forecast_days = 8) từ 00:00; bỏ 14 giờ đầu → còn 178, cắt về 168
+    # 192-hour payload from 00:00; dropping the first 14 leaves 178, trimmed to 168
     assert data.hourly[0].time == datetime(2026, 10, 28, 14, 0, tzinfo=timezone.utc)
     assert len(data.hourly) == 168
     assert len(data.daily) == 7
@@ -110,7 +110,7 @@ def test_forecast_starts_at_current_hour_and_has_168_points():
 
 def test_forecast_hours_168_with_days_3_is_not_truncated_by_days():
     data, _ = make_service(ok_handler()).forecast(LOCATION, hours=168, days=3)
-    assert len(data.hourly) == 168       # không bị giới hạn bởi days
+    assert len(data.hourly) == 168       # not limited by days
     assert len(data.daily) == 3
 
 
@@ -121,7 +121,7 @@ def test_forecast_trims_hours_and_days():
 
 
 def test_forecast_air_quality_shorter_than_weather_gives_null_by_time_not_index():
-    # Air quality chỉ có 24 giờ đầu (00:00–23:00): giờ 14:00–23:00 có AQI, từ 00:00 hôm sau là null.
+    # Air quality covers only the first 24 hours: 14:00-23:00 have AQI, from 00:00 next day it is null.
     data, _ = make_service(ok_handler(air=air_payload(24))).forecast(LOCATION, hours=48, days=7)
     by_hour = {p.time.hour + 24 * (p.time.day - 28): p for p in data.hourly}
     assert by_hour[14].us_aqi == 108 and by_hour[14].aqi_category == "unhealthy_sensitive"
@@ -132,7 +132,7 @@ def test_forecast_air_quality_shorter_than_weather_gives_null_by_time_not_index(
 
 def test_forecast_air_quality_offset_start_is_matched_by_time():
     air = air_payload(24)
-    # Air quality bắt đầu muộn 14 giờ (14:00) → index 0 của air tương ứng 14:00, không phải 00:00.
+    # Air quality starts at 14:00, so its index 0 is 14:00, not 00:00.
     air["hourly"]["time"] = hours(168)[14:38]
     air["hourly"]["us_aqi"] = list(range(1000, 1024))
     data, _ = make_service(ok_handler(air=air)).forecast(LOCATION, hours=3, days=1)
@@ -210,6 +210,6 @@ def test_cached_forecast_hourly_starts_at_serve_time_hour():
     now[0] = datetime(2026, 10, 28, 14, 5, tzinfo=timezone.utc)
     second, cached = service.forecast(LOCATION, hours=168, days=7)
     assert cached is True
-    assert len(calls) == 2               # không gọi HTTP thêm
+    assert len(calls) == 2               # no extra HTTP call
     assert second.hourly[0].time == datetime(2026, 10, 28, 14, 0, tzinfo=timezone.utc)
     assert len(second.hourly) == 168

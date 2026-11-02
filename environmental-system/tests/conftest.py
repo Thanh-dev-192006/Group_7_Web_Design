@@ -1,8 +1,5 @@
-"""Fixture dùng chung.
-
-- DB: SQLite in-memory (StaticPool) đã seed → không đụng tới weather.db thật.
-- Weather service: FakeWeatherService trả dữ liệu cố định → test không cần mạng.
-- TestClient KHÔNG dùng `with` → lifespan (tạo DB thật) không chạy trong test.
+"""Shared fixtures: seeded in-memory SQLite, a fake weather service (no network), and a
+TestClient used without `with` so the lifespan (real DB) does not run.
 """
 from datetime import date, datetime, timezone
 
@@ -11,7 +8,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
-from app import models  # noqa: F401 — đăng ký bảng
+from app import models  # noqa: F401 - registers tables
 from app.database import get_session
 from app.main import app
 from app.schemas import CurrentWeather, DailyPoint, Forecast, HourlyPoint
@@ -24,10 +21,10 @@ FIXED_TIME = datetime(2026, 10, 21, 3, 0, tzinfo=timezone.utc)
 
 
 class FakeWeatherService(WeatherService):
-    """Giữ nguyên logic cache của WeatherService, chỉ thay phần lấy dữ liệu."""
+    """Keeps WeatherService caching; only the data fetching is replaced."""
 
     def __init__(self, fail_for: dict[int | None, Exception] | None = None):
-        # clock cố định = FIXED_TIME để forecast() (lọc theo giờ hiện tại) không bỏ mất dữ liệu giả
+        # Fixed clock so forecast() (which filters by current hour) keeps the fake data
         super().__init__(client=object(), cache=TTLCache(ttl_seconds=60), clock=lambda: FIXED_TIME)
         self.calls = 0
         self.fail_for: dict[int | None, Exception] = fail_for or {}
