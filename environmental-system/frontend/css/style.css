@@ -118,6 +118,11 @@ a { color: var(--primary); }
 }
 
 .panel--sidebar { display: grid; gap: var(--gap); align-content: start; }
+@media (min-width: 801px) {
+    /* The map fills the rest of the sidebar so it matches the content column height. */
+    .panel--sidebar { grid-template-rows: auto minmax(420px, 1fr); align-content: stretch; }
+    .panel--sidebar .map { height: auto; }
+}
 .panel__title { margin: 0 0 .75rem; font-size: 1.05rem; }
 
 .field { display: grid; gap: .35rem; }

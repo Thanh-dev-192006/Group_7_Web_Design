@@ -55,6 +55,7 @@ export function createMap(container, locations, { onSelect }) {
     const map = L.map(container, { scrollWheelZoom: false }).setView(VIETNAM_CENTER, 5);
     addBaseLayer(map);
 
+    let legendNode = null;
     const legend = L.control({ position: "bottomright" });
     legend.onAdd = () => {
         const node = el("section", { className: "map-legend" },
@@ -69,6 +70,7 @@ export function createMap(container, locations, { onSelect }) {
         );
         L.DomEvent.disableClickPropagation(node);
         L.DomEvent.disableScrollPropagation(node);
+        legendNode = node;
         return node;
     };
     legend.addTo(map);
@@ -98,6 +100,29 @@ export function createMap(container, locations, { onSelect }) {
         path.addEventListener("focus", () => marker.openTooltip());
         path.addEventListener("blur", () => marker.closeTooltip());
         markers.set(loc.id, marker);
+    }
+
+    // Frame all cities above the legend; re-frame on container resize until the user pans or zooms.
+    const bounds = L.latLngBounds(locations.map((loc) => [loc.lat, loc.lon]));
+    let fitting = false;
+    let userMoved = false;
+    map.on("zoomstart dragstart", () => { if (!fitting) userMoved = true; });
+    const fitCities = () => {
+        fitting = true;
+        map.fitBounds(bounds, {
+            paddingTopLeft: [24, 24],
+            paddingBottomRight: [24, (legendNode?.offsetHeight ?? 0) + 24],
+            animate: false,
+        });
+        fitting = false;
+    };
+    fitCities();
+    // Leaflet only tracks window resizes; the sidebar grows when the content column loads.
+    if (typeof ResizeObserver !== "undefined") {
+        new ResizeObserver(() => {
+            map.invalidateSize();
+            if (!userMoved) fitCities();
+        }).observe(container);
     }
 
     function setMarkerAqi(locationId, category) {
