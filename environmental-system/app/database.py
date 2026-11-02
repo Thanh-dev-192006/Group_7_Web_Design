@@ -19,7 +19,7 @@ def make_engine(url: str, **kwargs) -> Engine:
         @event.listens_for(engine, "connect")
         def _sqlite_pragmas(dbapi_conn, _record):
             cursor = dbapi_conn.cursor()
-            # WAL lets the collector write while the API reads without locking.
+            # WAL so a future collector (phase 2) can write while the API reads.
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()

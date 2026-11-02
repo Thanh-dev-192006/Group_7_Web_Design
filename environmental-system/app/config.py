@@ -9,6 +9,7 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 class Settings(BaseSettings):
+    # Machine/environment-dependent values live here; do not hardcode them in routers/services.
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 
     app_name: str = "Weather & AQI API"

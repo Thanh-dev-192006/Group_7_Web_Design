@@ -9,7 +9,7 @@ Backend and frontend of the Group 7 weather and air-quality dashboard for 15 Vie
 
 ## Setup
 
-Requires Python 3.12 or newer. Run all commands from this folder (`environmental-system`).
+Requires Python 3.12 or newer (and Node.js 21+ for the frontend tests, which use glob support in `node --test`). Run all commands from this folder (`environmental-system`).
 
 ```powershell
 python -m venv .venv
@@ -117,7 +117,7 @@ All endpoints are `GET`. Successful responses are `{ "data": ..., "meta": ... }`
 
 1. The router validates the request and resolves the location from SQLite (unknown id -> 404).
 2. `WeatherService` (`app/services/weather.py`) looks in the in-memory `TTLCache`. On a miss it calls the Open-Meteo forecast API and air-quality API and maps the result to the project's schemas.
-3. The cache key is per location and kind (`current` or `forecast`), with a TTL of `CACHE_TTL_SECONDS` (15 minutes). The cache lives in the process, so each uvicorn worker has its own. A failed upstream call stores nothing.
+3. The cache key is per location and kind (`current` or `forecast`), with a TTL of `CACHE_TTL_SECONDS` (15 minutes). The cache lives in the process, so each uvicorn worker has its own. A forecast-API failure stores nothing; an air-quality failure still caches the result, with null AQI fields, for the TTL.
 4. `meta.cached` tells the client whether the response came from the cache.
 
 Rules worth knowing:
@@ -135,7 +135,13 @@ Rules worth knowing:
 - `js/api.js` is the only module that makes requests. `?mock=1` makes it read `frontend/mock/*.json` instead.
 - The current card and the map markers refresh every 10 minutes (`REFRESH_MINUTES` in `js/config.js`), skipped while the tab is hidden. Requests time out after 25 s (`REQUEST_TIMEOUT_MS`).
 - The selected location is stored in `localStorage` and mirrored to `?city=<id>`; the URL value wins on load, then the stored one, then the first location.
-- The rain alert looks at the next 12 hours of the hourly forecast (rain probability of at least 60 % or a rain/thunderstorm weather code).
+- The rain alert looks at the next 12 hours of the hourly forecast (chance of rain of at least 60 % or a rain/thunderstorm weather code).
+
+## Known limitations
+
+- **Daily forecast cards use UTC days.** Open-Meteo is called with `timezone=GMT` and the frontend formats the weekday in UTC, so between 00:00 and 06:59 Vietnam time the first card is the previous Vietnam date.
+- **The cache is per process.** Each uvicorn worker has its own copy.
+- **No single-flight on a cold cache.** Concurrent requests for the same uncached location each call Open-Meteo.
 
 ## Not implemented yet
 

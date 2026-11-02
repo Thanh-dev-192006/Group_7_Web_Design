@@ -3,6 +3,7 @@
 Design notes:
 - The cache holds one full 7-day / 168-hour payload per location; `hours` / `days`
   only trim at serve time, and hourly points are filtered by the current hour then.
+  The full 168 h are cached, so `hours` is never truncated by `days`.
 - The two APIs can differ in hour count, so air quality is joined by `time`, not index.
 - Missing values stay None (never 0).
 - If air quality fails, weather is still returned with null AQI fields; a forecast failure is a 502/503.

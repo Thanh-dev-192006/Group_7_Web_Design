@@ -1,14 +1,16 @@
+> Tài liệu giao việc (lịch sử) — nếu mâu thuẫn với README.md thì theo README.md.
+
 # [E] (TÙY CHỌN – CHỜ XÁC NHẬN ĐỀ) Giai đoạn 2: collector, phát hiện bất thường, lịch sử
 
-**Trạng thái:** ⛔ **CHƯA BẮT ĐẦU** — chỉ làm khi nhóm xác nhận với thầy rằng đề **bắt buộc** thu thập định kỳ + phát hiện bất thường (câu hỏi mở số 1 trong `claude/project-context.md`). Nếu không bắt buộc thì bỏ qua file này.
+**Trạng thái:** ⛔ **CHƯA BẮT ĐẦU** — chỉ làm khi nhóm xác nhận với thầy rằng đề **bắt buộc** thu thập định kỳ + phát hiện bất thường (xem `../API.md` và `../../README.md`, mục "Not implemented yet"). Nếu không bắt buộc thì bỏ qua file này.
 **Người phụ trách (dự kiến):** B (backend) + D (frontend) · **Branch:** `feat/backend-phase2-collector`, `feat/frontend-history`
-**Phụ thuộc:** issue B xong. Mọi thay đổi hợp đồng API cần ghi vào "Nhật ký điều chỉnh" của `claude/project-context.md` trước khi làm.
+**Phụ thuộc:** issue B xong. Mọi thay đổi hợp đồng API cần cập nhật `docs/API.md` trước khi làm.
 
 ## 0. QUY ƯỚC CHUNG — BẮT BUỘC (giống hệt trong mọi issue; agent đọc kỹ trước khi viết code)
 
 ### 0.1 Dự án
 Web dự báo thời tiết + chất lượng không khí (AQI) cho 15 thành phố Việt Nam. Môn Web Design and Programming, nhóm 4 người.
-Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`hero-api/`** (mọi đường dẫn dưới đây tính từ `hero-api/`).
+Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`environmental-system/`** (mọi đường dẫn dưới đây tính từ `environmental-system/`).
 
 - Backend: FastAPI + SQLModel + SQLite, lấy dữ liệu từ Open-Meteo (không tự huấn luyện mô hình), cache 15 phút. Chạy: `fastapi dev app/main.py` → http://127.0.0.1:8000, Swagger `/docs`.
 - Frontend: HTML/CSS/JS **thuần** (ES modules, không framework, không bundler, không npm) + Leaflet + Chart.js (nạp bằng `<script>` CDN trong `index.html`, dùng qua biến toàn cục `L` và `Chart`). Do FastAPI phục vụ cùng origin.

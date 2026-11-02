@@ -6,11 +6,11 @@ A web dashboard for current weather, forecasts and air quality (US EPA AQI) in 1
 
 - **Map** of the 15 cities (Leaflet / OpenStreetMap) with markers coloured by the current AQI category.
 - **Current conditions** for the selected city, plus AQI health advice for the general population and for sensitive groups.
-- **48-hour chart** of temperature and rain probability (Chart.js), with a **rain alert** banner based on the next 12 hours.
+- **48-hour chart** of temperature and chance of rain (Chart.js), with a **rain alert** banner based on the next 12 hours.
 - **7-day forecast** cards.
 - **Remembered location:** the last selected city is stored in the browser, and `?city=<id>` in the URL opens a specific city (deep link).
 - **Auto refresh** of the current-conditions card and the map markers every 10 minutes.
-- **Resilient loading:** skeleton placeholders while loading, a request timeout, and a retry button on every data panel that fails.
+- **Resilient loading:** skeleton placeholders while loading, a request timeout, and a retry button when loading data fails.
 - **Mock mode:** add `?mock=1` to the URL to run the frontend on static JSON files, without the weather data source.
 
 ## Screenshots
@@ -57,7 +57,7 @@ The backend also serves the static frontend, so the app runs from a single proce
 
 ## Quick start
 
-Requires Python 3.12 or newer. Run everything from the `environmental-system` folder.
+Requires Python 3.12 or newer (and Node.js 21+ for the frontend tests, which use glob support in `node --test`). Run everything from the `environmental-system` folder.
 
 Windows (PowerShell):
 
@@ -137,5 +137,6 @@ node --test frontend/tests/*.test.mjs
 
 - Weather and air-quality data: [Open-Meteo](https://open-meteo.com/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Map library: [Leaflet](https://leafletjs.com/), with map tiles from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+- Fallback basemap tiles (used in `frontend/js/components/map.js`): [CARTO](https://carto.com/attributions) basemaps, © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors © CARTO.
 - Charts: [Chart.js](https://www.chartjs.org/).
 - The infrastructure pattern (session dependency, router/service layout, in-memory SQLite tests with `TestClient`) is adapted from the course's *Hero API - Week 9/10 lab reference solution*. The weather and AQI domain logic and the UI were written for this project.

@@ -1,3 +1,5 @@
+> Tài liệu giao việc (lịch sử) — nếu mâu thuẫn với README.md thì theo README.md.
+
 # Issue cho nhóm — hoàn thiện project Weather & AQI
 
 Mỗi issue là **một file tự chứa**: ai nhận issue nào thì copy/import **đúng file đó** cho Agent (đã kèm đầy đủ quy ước chung ở mục 0, nên Agent không cần đọc thêm file nào khác để biết đặt tên và để file ở đâu).

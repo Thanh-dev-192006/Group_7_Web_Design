@@ -13,16 +13,14 @@ Chia theo **file/thư mục** để hạn chế conflict. Nhóm tự gán tên v
 | **C — Frontend: layout & bản đồ** | | Layout, CSS, responsive, dark mode, bản đồ + màu marker AQI, chọn địa điểm | `frontend/index.html`, `frontend/css/`, `components/map.js`, `components/location-picker.js` |
 | **D — Frontend: dữ liệu & GĐ2** | | Biểu đồ 48h, thẻ 7 ngày, thẻ hiện tại; sau đó collector + anomaly (GĐ2) | `components/hourly-chart.js`, `components/daily-list.js`, `components/current-card.js`, `collector/` |
 
-Thứ tự phụ thuộc: **không ai phải chờ ai**.
-- Frontend làm với `?mock=1` (dữ liệu trong `frontend/mock/`) cho đến khi A xong.
-- Backend lấy dữ liệu thật đã xong (A); frontend bỏ `?mock=1` là chạy với dữ liệu thật.
+Backend lấy dữ liệu thật đã xong; frontend có thể chạy với dữ liệu thật hoặc `?mock=1` (dữ liệu trong `frontend/mock/`).
 
 ## Quy tắc vàng
 
 1. **Hợp đồng API chỉ đổi có chủ đích.** Đổi field/endpoint → sửa cùng lúc `app/schemas.py`, `docs/API.md`, `frontend/mock/*.json` trong **một PR**, báo cả nhóm.
 2. **Không vào thẳng `main`.** Mỗi việc một branch, merge qua Pull Request, ít nhất 1 người khác review.
-3. **`pytest` phải pass** trước khi mở PR.
-4. **Đổi định hướng lớn** (stack, kiến trúc, phạm vi) → ghi vào mục "Nhật ký điều chỉnh" của `claude/project-context.md` trước.
+3. **`pytest` và `node --test frontend/tests/*.test.mjs` phải pass** trước khi mở PR (cần Node.js 21+ để dùng glob).
+4. **Đổi định hướng lớn** (stack, kiến trúc, phạm vi) → cập nhật `docs/API.md` / [`README.md`](README.md) trước và báo cả nhóm.
 
 ## Git
 
@@ -57,6 +55,6 @@ Commit message: `<loại>(<phạm vi>): <mô tả ngắn>` — loại: `feat`, `
 ## Definition of Done
 
 - [ ] Chạy được local, không lỗi console
-- [ ] `pytest` pass; có test cho logic mới (backend)
+- [ ] `pytest` và `node --test frontend/tests/*.test.mjs` pass; có test cho logic mới (backend)
 - [ ] Có loading/empty/error (frontend), hiển thị ổn ở màn hình 390px
 - [ ] Cập nhật `docs/API.md` / README nếu có thay đổi liên quan

@@ -1,6 +1,7 @@
 """Initial locations, seeded idempotently on startup (manually: python -m app.seed).
 
-These are city-centre measurement points, not province boundaries. Keep `slug`
+These are city-centre measurement points, not province boundaries, so they are
+unaffected by province-boundary changes. Keep `slug`
 stable for existing entries when editing LOCATIONS.
 """
 from sqlmodel import Session, select

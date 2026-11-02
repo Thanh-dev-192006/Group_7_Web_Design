@@ -1,3 +1,5 @@
+> Tài liệu giao việc (lịch sử) — nếu mâu thuẫn với README.md thì theo README.md.
+
 # Quy ước chung (bản gốc)
 
 > Đây là bản gốc của mục 0 trong các issue. Sửa ở đây rồi chép lại vào cả 4 issue.
@@ -6,7 +8,7 @@
 
 ### 0.1 Dự án
 Web dự báo thời tiết + chất lượng không khí (AQI) cho 15 thành phố Việt Nam. Môn Web Design and Programming, nhóm 4 người.
-Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`hero-api/`** (mọi đường dẫn dưới đây tính từ `hero-api/`).
+Repo `Group_7_Web_Design`, toàn bộ app nằm trong thư mục **`environmental-system/`** (mọi đường dẫn dưới đây tính từ `environmental-system/`).
 
 - Backend: FastAPI + SQLModel + SQLite, lấy dữ liệu từ Open-Meteo (không tự huấn luyện mô hình), cache 15 phút. Chạy: `fastapi dev app/main.py` → http://127.0.0.1:8000, Swagger `/docs`.
 - Frontend: HTML/CSS/JS **thuần** (ES modules, không framework, không bundler, không npm) + Leaflet + Chart.js (nạp bằng `<script>` CDN trong `index.html`, dùng qua biến toàn cục `L` và `Chart`). Do FastAPI phục vụ cùng origin.
