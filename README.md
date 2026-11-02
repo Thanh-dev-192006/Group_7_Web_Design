@@ -1,102 +1,141 @@
-# Weather & AQI Dashboard — Group 7 (Web Design and Programming)
+# Weather & AQI Dashboard - Group 7 (Web Design and Programming)
 
-Hệ thống web theo dõi và dự báo tình hình thời tiết cùng chất lượng không khí (AQI) cho 15 thành phố tại Việt Nam.
+A web dashboard for current weather, forecasts and air quality (US EPA AQI) in 15 cities across Vietnam. All data comes from [Open-Meteo](https://open-meteo.com/); the project does not train its own models.
 
-## Giới thiệu dự án
+## Features
 
-Dự án cung cấp giao diện trực quan cho phép người dùng theo dõi tình trạng thời tiết hiện tại, chất lượng không khí theo tiêu chuẩn US EPA, biểu đồ nhiệt độ 48 giờ và dự báo xu hướng thời tiết 7 ngày tới cho các tỉnh thành Việt Nam.
+- **Map** of the 15 cities (Leaflet / OpenStreetMap) with markers coloured by the current AQI category.
+- **Current conditions** for the selected city, plus AQI health advice for the general population and for sensitive groups.
+- **48-hour chart** of temperature and rain probability (Chart.js), with a **rain alert** banner based on the next 12 hours.
+- **7-day forecast** cards.
+- **Remembered location:** the last selected city is stored in the browser, and `?city=<id>` in the URL opens a specific city (deep link).
+- **Auto refresh** of the current-conditions card and the map markers every 10 minutes.
+- **Resilient loading:** skeleton placeholders while loading, a request timeout, and a retry button on every data panel that fails.
+- **Mock mode:** add `?mock=1` to the URL to run the frontend on static JSON files, without the weather data source.
 
-- **Backend:** Xây dựng bằng **FastAPI** + **SQLModel** + **SQLite**, tự động thu thập và đồng bộ dữ liệu từ Open-Meteo, lưu bộ nhớ đệm (cache) trong 15 phút.
-- **Frontend:** Thiết kế dạng Single Page Application bằng **HTML/CSS/JavaScript thuần** (ES modules, không framework/bundler), tích hợp thư viện bản đồ **Leaflet** và biểu đồ **Chart.js** qua CDN, được phục vụ cùng origin bởi backend FastAPI.
-- **Mock mode:** Hỗ trợ chế độ chạy thử nghiệm frontend không cần kết nối mạng hoặc backend (`?mock=1`).
+## Screenshots
 
-## Giao diện ứng dụng
+<!-- Placeholder: add desktop (1280px) and mobile (390px) screenshots here. -->
+_Screenshots will be added once the UI is finalised._
 
-<!-- Chỗ để ảnh chụp màn hình ứng dụng (Desktop 1280px & Mobile 390px) -->
-_Ảnh chụp giao diện sẽ được cập nhật sau khi hoàn thiện các thành phần frontend._
-
-## Kiến trúc hệ thống
+## Architecture
 
 ```text
 +---------------------------------------------------------------+
-|               Frontend (HTML/CSS/JS thuần - ES Modules)        |
-|  - Bản đồ Leaflet (15 thành phố, tô màu marker theo mức AQI)  |
-|  - Biểu đồ nhiệt độ Chart.js (48 giờ)                         |
-|  - Dự báo xu hướng 7 ngày, thẻ chi tiết thời tiết hiện tại     |
+|        Frontend (plain HTML/CSS/JS, ES modules, no build)     |
+|  - Leaflet map, markers coloured by AQI category              |
+|  - Current card, 48 h Chart.js chart, 7-day forecast          |
 +---------------------------------------------------------------+
                                |
-                               | (HTTP GET / REST API)
+                               | HTTP GET (JSON, same origin)
                                v
 +---------------------------------------------------------------+
-|                      FastAPI Backend (hero-api)               |
-|  - Routers:                                                   |
-|    * /api/locations (danh sách & chi tiết địa điểm)           |
-|    * /api/current (tóm tắt toàn bộ địa điểm cho bản đồ)       |
-|    * /api/locations/{id}/current (thời tiết hiện tại)         |
-|    * /api/locations/{id}/forecast (dự báo hourly & daily)     |
-|    * /api/health (kiểm tra sức khỏe hệ thống)                 |
-|  - In-Memory TTLCache (thời hạn 15 phút, đa luồng an toàn)    |
-|  - SQLite Database (lưu trữ metadata 15 thành phố)            |
+|                         FastAPI backend                       |
+|  Routers:                                                     |
+|    GET /api/health                                            |
+|    GET /api/locations                                         |
+|    GET /api/locations/{id}                                    |
+|    GET /api/locations/{id}/current                            |
+|    GET /api/locations/{id}/forecast                           |
+|    GET /api/current   (summary of all cities, for the map)    |
+|                                                               |
+|  In-memory TTL cache (15 minutes, thread-safe)                |
+|  SQLite (location metadata for the 15 cities)                 |
 +---------------------------------------------------------------+
                                |
             +------------------+------------------+
-            | (Cache hit)                         | (Cache miss)
+            | cache hit                           | cache miss
             v                                     v
-   [ In-Memory TTLCache ]               +-----------------------+
+   [ In-memory TTL cache ]              +-----------------------+
                                         |    Open-Meteo APIs    |
-                                        |  - Weather Forecast   |
-                                        |  - Air Quality        |
+                                        |  - Weather forecast   |
+                                        |  - Air quality        |
                                         +-----------------------+
 ```
 
-## Hướng dẫn cài đặt và chạy ứng dụng
+The backend also serves the static frontend, so the app runs from a single process on one origin.
 
-Yêu cầu môi trường: **Python 3.12+**.
+## Quick start
 
-### 1. Khởi tạo môi trường và cài đặt dependencies
+Requires Python 3.12 or newer. Run everything from the `environmental-system` folder.
+
+Windows (PowerShell):
 
 ```powershell
 cd environmental-system
 python -m venv .venv
-.venv\Scripts\activate            # Trên macOS/Linux: source .venv/bin/activate
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-### 2. Chạy máy chủ phát triển (Development Server)
+macOS / Linux (bash):
 
-```powershell
-fastapi dev app/main.py
+```bash
+cd environmental-system
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-- **Giao diện Web:** http://127.0.0.1:8000
-- **Chế độ dữ liệu mẫu (Mock mode):** http://127.0.0.1:8000/?mock=1
-- **Tài liệu API tương tác (Swagger UI):** http://127.0.0.1:8000/docs
-- Cơ sở dữ liệu SQLite (`weather.db`) và 15 địa điểm mặc định sẽ được tự động khởi tạo khi chạy ứng dụng lần đầu.
+Then open:
 
-### 3. Kiểm thử tự động (Unit / Integration Tests)
+- Web app: http://127.0.0.1:8000
+- Mock mode: http://127.0.0.1:8000/?mock=1
+- Interactive API docs (Swagger UI): http://127.0.0.1:8000/docs
 
-Hệ thống kiểm thử sử dụng `pytest` với cơ sở dữ liệu in-memory SQLite và Mock Service, không phụ thuộc kết nối mạng:
+The SQLite database (`weather.db`) and the 15 default locations are created automatically on first start. No API key is needed. See [`environmental-system/README.md`](environmental-system/README.md) for configuration.
 
-```powershell
+## Testing
+
+Run from `environmental-system` with the virtual environment active. Neither suite needs network access.
+
+```bash
+# Backend (pytest, in-memory SQLite and a fake weather service)
 pytest
+
+# Frontend unit tests (Node's built-in test runner)
+node --test frontend/tests/*.test.mjs
 ```
 
-## Tài liệu API
+## Project structure
 
-Tài liệu hợp đồng API chi tiết giữa Backend và Frontend được lưu trữ tại:
-👉 [`hero-api/docs/API.md`](hero-api/docs/API.md)
+```text
+.
+├── README.md                      # this file
+└── environmental-system/
+    ├── README.md                  # developer guide
+    ├── CONTRIBUTING.md            # team workflow
+    ├── requirements.txt
+    ├── .env.example               # optional configuration template
+    ├── app/                       # FastAPI backend (routers, services, models, config)
+    ├── frontend/                  # static frontend (index.html, css/, js/, mock/, tests/)
+    ├── tests/                     # backend tests
+    ├── collector/                 # phase 2 placeholder (not implemented)
+    ├── scripts/                   # check_open_meteo.py (checks the real upstream API)
+    └── docs/
+        ├── API.md                 # API contract
+        ├── issues/                # per-role task descriptions
+        └── plans/                 # design and implementation plans
+```
 
-## Thành viên thực hiện (Nhóm 7)
+## Documentation
 
-1. Thành viên 1: _[Họ và tên - MSSV]_
-2. Thành viên 2: _[Họ và tên - MSSV]_
-3. Thành viên 3: _[Họ và tên - MSSV]_
-4. Thành viên 4: _[Họ và tên - MSSV]_
+- Developer guide: [`environmental-system/README.md`](environmental-system/README.md)
+- API contract: [`environmental-system/docs/API.md`](environmental-system/docs/API.md)
+- Team workflow: [`environmental-system/CONTRIBUTING.md`](environmental-system/CONTRIBUTING.md)
 
-## Nguồn tham khảo
+## Team members (Group 7)
 
-- Khung cấu trúc hạ tầng ứng dụng (pattern Session dependency, cấu trúc router/services, kiểm thử in-memory với SQLite + TestClient) được kế thừa và phát triển từ bài mẫu *Hero API — Week 9/10 lab reference solution* của môn học. Phần nghiệp vụ thời tiết, AQI và giao diện người dùng được xây dựng mới hoàn toàn cho đề tài này.
+1. Member 1: _[Full name - student ID]_
+2. Member 2: _[Full name - student ID]_
+3. Member 3: _[Full name - student ID]_
+4. Member 4: _[Full name - student ID]_
 
-## Bản quyền và Nguồn dữ liệu
+## Credits and data sources
 
-- Dữ liệu thời tiết và chất lượng không khí được cung cấp bởi dịch vụ [Open-Meteo](https://open-meteo.com/) tuân theo điều khoản giấy phép [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+- Weather and air-quality data: [Open-Meteo](https://open-meteo.com/), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Map library: [Leaflet](https://leafletjs.com/), with map tiles from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+- Charts: [Chart.js](https://www.chartjs.org/).
+- The infrastructure pattern (session dependency, router/service layout, in-memory SQLite tests with `TestClient`) is adapted from the course's *Hero API - Week 9/10 lab reference solution*. The weather and AQI domain logic and the UI were written for this project.
