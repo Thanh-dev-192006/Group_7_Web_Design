@@ -1,11 +1,11 @@
-// Trạng thái hiển thị dùng chung cho mọi vùng dữ liệu: loading / empty / error / ready.
-// Quy ước: chỉ dùng textContent/createElement, KHÔNG gán innerHTML với dữ liệu từ API.
+// Shared display states for every data region: loading / empty / error / ready.
+// Rule: use textContent/createElement only; never assign API data to innerHTML.
 
 export { errorMessage } from "./errors.js";
 
 /**
- * options.onRetry (chỉ cho state "error"): hiện nút "Thử lại" gọi callback này.
- * Loading hiển thị skeleton + chữ ẩn cho trình đọc màn hình.
+ * options.onRetry (state "error" only): shows a "Retry" button that calls this callback.
+ * Loading shows a skeleton plus screen-reader-only text.
  */
 export function setState(container, state, message = "", { onRetry } = {}) {
     container.className = state === "ready" ? "" : `state state--${state}`;
@@ -14,7 +14,7 @@ export function setState(container, state, message = "", { onRetry } = {}) {
 
     if (state === "loading") {
         container.append(
-            el("span", { className: "visually-hidden" }, message || "Đang tải…"),
+            el("span", { className: "visually-hidden" }, message || "Loading…"),
             el("div", { className: "skeleton skeleton--title" }),
             el("div", { className: "skeleton" }),
             el("div", { className: "skeleton skeleton--short" }),
@@ -22,14 +22,14 @@ export function setState(container, state, message = "", { onRetry } = {}) {
         return;
     }
 
-    const defaults = { empty: "Không có dữ liệu", error: "Đã xảy ra lỗi" };
+    const defaults = { empty: "No data", error: "Something went wrong" };
     container.append(message || defaults[state] || "");
     if (state === "error" && typeof onRetry === "function") {
-        container.append(el("button", { type: "button", className: "state__retry", onclick: onRetry }, "Thử lại"));
+        container.append(el("button", { type: "button", className: "state__retry", onclick: onRetry }, "Retry"));
     }
 }
 
-/** Tạo phần tử nhanh: el("div", { className: "x" }, "text", childEl) */
+/** Quick element builder: el("div", { className: "x" }, "text", childEl) */
 export function el(tag, props = {}, ...children) {
     const node = Object.assign(document.createElement(tag), props);
     node.append(...children.filter((c) => c != null));

@@ -1,5 +1,5 @@
-// Thẻ thời tiết hiện tại — component MẪU: các component khác viết theo cùng kiểu
-// (nhận container + data, chỉ dùng el()/textContent, không innerHTML).
+// Current-conditions card — the reference component: others follow the same pattern
+// (take container + data, use el()/textContent only, never innerHTML).
 import { aqiBadge } from "../aqi.js";
 import { healthAdvice } from "../health.js";
 import { fmt, weatherText } from "../format.js";
@@ -10,10 +10,10 @@ export function renderCurrent(container, current) {
     setState(container, "ready");
 
     const stats = [
-        ["Cảm giác như", fmt.num(current.apparent_temperature_c, "°C")],
-        ["Độ ẩm", fmt.num(current.humidity_pct, "%")],
-        ["Gió", fmt.num(current.wind_speed_kmh, " km/h")],
-        ["Lượng mưa", fmt.num(current.precipitation_mm, " mm", 1)],
+        ["Feels like", fmt.num(current.apparent_temperature_c, "°C")],
+        ["Humidity", fmt.num(current.humidity_pct, "%")],
+        ["Wind", fmt.num(current.wind_speed_kmh, " km/h")],
+        ["Precipitation", fmt.num(current.precipitation_mm, " mm", 1)],
         ["PM2.5", fmt.num(current.pm2_5, " µg/m³", 1)],
     ];
 
@@ -33,13 +33,13 @@ export function renderCurrent(container, current) {
     );
 }
 
-/** Khối lời khuyên sức khỏe theo mức AQI; null (không hiển thị) nếu mức không xác định. */
+/** Health advice block for the AQI level; null (hidden) if the level is unknown. */
 function adviceBlock(category) {
     const advice = healthAdvice(category);
     if (!advice) return null;
     return el("div", { className: `advice aqi-advice--${category}` },
-        el("h3", { className: "advice__title" }, "Lời khuyên sức khỏe"),
-        el("p", {}, el("strong", {}, "Mọi người: "), advice.general),
-        el("p", {}, el("strong", {}, "Nhóm nhạy cảm: "), advice.sensitive),
+        el("h3", { className: "advice__title" }, "Health advice"),
+        el("p", {}, el("strong", {}, "Everyone: "), advice.general),
+        el("p", {}, el("strong", {}, "Sensitive groups: "), advice.sensitive),
     );
 }

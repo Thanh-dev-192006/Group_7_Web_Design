@@ -1,5 +1,5 @@
-// Nhớ địa điểm đã chọn: ưu tiên ?city=<id> trên URL, rồi localStorage, rồi địa điểm đầu tiên.
-// Không truy cập window/localStorage ở mức module để import được trong Node (unit test).
+// Remembers the selected location: ?city=<id> in the URL first, then localStorage, then the first location.
+// No module-level window/localStorage access, so Node unit tests can import it.
 const STORAGE_KEY = "weather.locationId";
 
 function parseId(raw) {
@@ -22,7 +22,7 @@ export function readStoredId() {
     try {
         return localStorage.getItem(STORAGE_KEY);
     } catch {
-        return null;   // storage bị chặn hoặc không có
+        return null;   // storage blocked or unavailable
     }
 }
 
@@ -30,6 +30,6 @@ export function storeId(id) {
     try {
         localStorage.setItem(STORAGE_KEY, String(id));
     } catch {
-        // bỏ qua: không lưu được cũng không ảnh hưởng chức năng chính
+        // ignore: failing to persist doesn't affect core behaviour
     }
 }

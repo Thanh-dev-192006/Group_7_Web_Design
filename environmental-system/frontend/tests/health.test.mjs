@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { healthAdvice } from "../js/health.js";
 import { AQI_LEVELS } from "../js/aqi.js";
 
-test("mọi mức AQI đều có lời khuyên cho cả hai nhóm", () => {
+test("every AQI level has advice for both groups", () => {
     for (const category of Object.keys(AQI_LEVELS)) {
         const advice = healthAdvice(category);
         assert.equal(typeof advice?.general, "string", category);
@@ -13,20 +13,20 @@ test("mọi mức AQI đều có lời khuyên cho cả hai nhóm", () => {
     }
 });
 
-test("mức không xác định hoặc thiếu trả về null", () => {
+test("unknown or missing level returns null", () => {
     assert.equal(healthAdvice("unknown"), null);
     assert.equal(healthAdvice(undefined), null);
     assert.equal(healthAdvice(null), null);
     assert.equal(healthAdvice("toString"), null);
 });
 
-test("nội dung lời khuyên khớp hướng dẫn US EPA", () => {
+test("advice text matches US EPA guidance", () => {
     assert.deepEqual(healthAdvice("good"), {
-        general: "Không khí trong lành, thoải mái hoạt động ngoài trời.",
-        sensitive: "Không cần biện pháp đặc biệt.",
+        general: "Air quality is good. Enjoy outdoor activities.",
+        sensitive: "No special precautions needed.",
     });
     assert.deepEqual(healthAdvice("hazardous"), {
-        general: "Cảnh báo khẩn cấp: mọi người nên ở trong nhà.",
-        sensitive: "Nhóm nhạy cảm tuyệt đối không ra ngoài.",
+        general: "Emergency conditions: everyone should stay indoors.",
+        sensitive: "Sensitive groups must not go outside.",
     });
 });

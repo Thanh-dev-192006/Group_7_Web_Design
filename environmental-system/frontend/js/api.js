@@ -1,13 +1,13 @@
-// Lớp gọi API duy nhất của frontend. Component KHÔNG gọi fetch() trực tiếp.
-// Hợp đồng: docs/API.md — thành công {data, meta}, lỗi {error: {code, message}}.
+// The only API layer in the frontend; components must not call fetch() directly.
+// Contract: docs/API.md — success {data, meta}, failure {error: {code, message}}.
 import { CONFIG } from "./config.js";
 
 export class ApiError extends Error {
     constructor(status, code, message, details = null) {
         super(message);
         this.name = "ApiError";
-        this.status = status;   // HTTP status, 0 nếu lỗi mạng
-        this.code = code;       // VD "LOCATION_NOT_FOUND", "NOT_IMPLEMENTED"
+        this.status = status;   // HTTP status, 0 on network error
+        this.code = code;       // e.g. "LOCATION_NOT_FOUND", "NOT_IMPLEMENTED"
         this.details = details;
     }
 }
@@ -15,14 +15,14 @@ export class ApiError extends Error {
 async function request(path, { mockFile } = {}) {
     const url = CONFIG.USE_MOCK && mockFile ? `mock/${mockFile}` : `${CONFIG.API_BASE}${path}`;
 
-    // Một timer cho cả request, gồm cả lúc đọc body.
+    // One timer covers the whole request, including reading the body.
     const controller = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => {
         timedOut = true;
         controller.abort();
     }, CONFIG.REQUEST_TIMEOUT_MS);
-    const timeoutError = () => new ApiError(0, "TIMEOUT", "Máy chủ phản hồi quá lâu");
+    const timeoutError = () => new ApiError(0, "TIMEOUT", "Server took too long to respond");
 
     let response;
     let body = null;
@@ -30,13 +30,13 @@ async function request(path, { mockFile } = {}) {
         try {
             response = await fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal });
         } catch {
-            throw timedOut ? timeoutError() : new ApiError(0, "NETWORK_ERROR", "Không kết nối được máy chủ");
+            throw timedOut ? timeoutError() : new ApiError(0, "NETWORK_ERROR", "Could not connect to the server");
         }
 
         try {
             body = await response.json();
         } catch {
-            // body không phải JSON (hoặc quá thời gian khi đọc body)
+            // body is not JSON (or the timeout hit while reading it)
             if (timedOut) throw timeoutError();
         }
     } finally {
@@ -56,7 +56,7 @@ export const api = {
     getCurrent: (locationId) =>
         request(`/api/locations/${locationId}/current`, { mockFile: "current.json" }),
 
-    // Tóm tắt thời tiết + AQI của TẤT CẢ địa điểm (tô màu marker bản đồ). Backend: GET /api/current (issue B).
+    // Weather + AQI summary for ALL locations (colours the map markers). Backend: GET /api/current.
     getCurrentAll: () => request("/api/current", { mockFile: "current-all.json" }),
 
     getForecast: (locationId, { hours = CONFIG.FORECAST_HOURS, days = CONFIG.FORECAST_DAYS } = {}) =>

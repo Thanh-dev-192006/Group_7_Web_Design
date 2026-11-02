@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Design tokens — đổi màu/khoảng cách ở ĐÂY, không hardcode trong component.
+   Design tokens — change colours and spacing here, not in components.
    ========================================================================== */
 :root {
     --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -16,7 +16,7 @@
     --shadow: 0 2px 12px rgb(19 38 74 / 8%);
     --gap: 1rem;
 
-    /* Thang AQI US EPA — khớp app/services/aqi.py và js/aqi.js */
+    /* US EPA AQI scale — keep in sync with app/services/aqi.py and js/aqi.js */
     --aqi-good: #00e400;
     --aqi-moderate: #ffff00;
     --aqi-unhealthy-sensitive: #ff7e00;
@@ -133,7 +133,7 @@ a { color: var(--primary); }
     color: var(--text);
 }
 
-/* AQI badge: thêm class aqi--<category> (xem js/aqi.js) */
+/* AQI badge: add class aqi--<category> (see js/aqi.js) */
 .aqi {
     display: inline-flex;
     align-items: center;
@@ -152,7 +152,6 @@ a { color: var(--primary); }
 .aqi--very_unhealthy { background: var(--aqi-very-unhealthy); color: var(--aqi-text-light); }
 .aqi--hazardous { background: var(--aqi-hazardous); color: var(--aqi-text-light); }
 
-/* Thẻ thời tiết hiện tại */
 .current { display: grid; gap: .75rem; }
 .current__main { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
 .current__temp { font-size: 2.75rem; font-weight: 700; line-height: 1; }
@@ -167,7 +166,7 @@ a { color: var(--primary); }
 .stats dt { font-size: .8rem; color: var(--text-muted); }
 .stats dd { margin: 0; font-weight: 600; }
 
-/* Lời khuyên sức khỏe dưới thẻ hiện tại: viền trái theo màu AQI (xem js/health.js) */
+/* Health advice: left border takes the AQI colour (see js/health.js) */
 .advice { padding: .5rem .75rem; border-left: 4px solid var(--aqi-unknown); border-radius: 4px; }
 .advice__title { margin: 0 0 .25rem; font-size: .95rem; }
 .advice p { margin: .25rem 0; font-size: .9rem; }
@@ -179,10 +178,10 @@ a { color: var(--primary); }
 .aqi-advice--hazardous { border-left-color: var(--aqi-hazardous); }
 
 /* ==========================================================================
-   States — mọi vùng dữ liệu dùng chung (xem js/ui.js)
+   States — shared by every data region (see js/ui.js)
    ========================================================================== */
 .state { color: var(--text-muted); }
-/* Spinner chỉ cho markup tĩnh trong index.html; setState("loading") dùng skeleton. */
+/* Spinner is only for the static markup in index.html; setState("loading") uses skeletons. */
 .state--loading:not(:has(.skeleton))::before {
     content: "";
     display: inline-block;

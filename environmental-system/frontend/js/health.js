@@ -1,33 +1,33 @@
-// Lời khuyên sức khỏe theo aqi_category (hướng dẫn US EPA, dịch sang tiếng Việt).
-// Khóa khớp với AQI_LEVELS trong js/aqi.js. Thuần logic: không import gì.
+// Health advice per aqi_category (US EPA guidance).
+// Keys match AQI_LEVELS in js/aqi.js. Pure logic, no imports.
 const ADVICE = {
     good: {
-        general: "Không khí trong lành, thoải mái hoạt động ngoài trời.",
-        sensitive: "Không cần biện pháp đặc biệt.",
+        general: "Air quality is good. Enjoy outdoor activities.",
+        sensitive: "No special precautions needed.",
     },
     moderate: {
-        general: "Chất lượng không khí chấp nhận được.",
-        sensitive: "Người rất nhạy cảm nên hạn chế gắng sức lâu ngoài trời.",
+        general: "Air quality is acceptable.",
+        sensitive: "Unusually sensitive people should limit prolonged outdoor exertion.",
     },
     unhealthy_sensitive: {
-        general: "Người khỏe mạnh vẫn có thể hoạt động bình thường.",
-        sensitive: "Trẻ em, người già, người có bệnh hô hấp/tim mạch nên hạn chế ra ngoài lâu.",
+        general: "Healthy people can carry on as normal.",
+        sensitive: "Children, older adults and people with respiratory or heart conditions should limit time outdoors.",
     },
     unhealthy: {
-        general: "Hạn chế hoạt động gắng sức ngoài trời, nên đeo khẩu trang khi ra ngoài.",
-        sensitive: "Nhóm nhạy cảm nên ở trong nhà.",
+        general: "Limit strenuous outdoor activity and wear a mask when going out.",
+        sensitive: "Sensitive groups should stay indoors.",
     },
     very_unhealthy: {
-        general: "Tránh hoạt động ngoài trời, đóng cửa sổ, đeo khẩu trang N95 nếu phải ra ngoài.",
-        sensitive: "Nhóm nhạy cảm cần ở trong nhà, cân nhắc dùng máy lọc không khí.",
+        general: "Avoid outdoor activity, keep windows closed, and wear an N95 mask if you must go out.",
+        sensitive: "Sensitive groups should stay indoors and consider using an air purifier.",
     },
     hazardous: {
-        general: "Cảnh báo khẩn cấp: mọi người nên ở trong nhà.",
-        sensitive: "Nhóm nhạy cảm tuyệt đối không ra ngoài.",
+        general: "Emergency conditions: everyone should stay indoors.",
+        sensitive: "Sensitive groups must not go outside.",
     },
 };
 
-/** Trả về { general, sensitive } cho mức AQI, hoặc null nếu mức không xác định/thiếu. */
+/** Returns { general, sensitive } for an AQI level, or null if the level is unknown or missing. */
 export function healthAdvice(category) {
     return Object.hasOwn(ADVICE, category) ? { ...ADVICE[category] } : null;
 }

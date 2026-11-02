@@ -1,4 +1,4 @@
-// Icon thời tiết theo mã WMO (Open-Meteo), không phụ thuộc DOM.
+// Weather icons by WMO code (Open-Meteo); no DOM dependency.
 const DAY_ICONS = {
     0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
     45: "🌫️", 48: "🌫️",

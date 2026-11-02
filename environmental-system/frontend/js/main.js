@@ -1,5 +1,5 @@
-// Điểm vào frontend: tải danh sách địa điểm, gắn các component với nhau.
-// Logic hiển thị nằm trong js/components/*, file này chỉ điều phối.
+// Frontend entry point: loads the locations and wires the components together.
+// Rendering logic lives in js/components/*; this file only orchestrates.
 import { api } from "./api.js";
 import { CONFIG } from "./config.js";
 import { renderCurrent } from "./components/current-card.js";
@@ -21,20 +21,20 @@ const views = {
     updatedAt: $("#updated-at"),
 };
 
-const INVALID_DATA_MESSAGE = "Dữ liệu trả về không hợp lệ";
+const INVALID_DATA_MESSAGE = "The data returned was invalid";
 
-// Nút "Thử lại" của các vùng dữ liệu: tải lại địa điểm đang chọn / chạy lại init.
+// "Retry" handlers: reload the selected location / rerun init.
 const retrySelected = { onRetry: () => void selectLocation(selectedLocationId) };
 const retryInit = {
     onRetry: () => {
-        // Dọn trạng thái lỗi (kể cả class "map" của #map) trước khi init tạo lại bản đồ.
+        // Reset error state (including the "map" class on #map) before init recreates the map.
         for (const view of [views.current, views.hourly, views.daily, views.map]) setState(view, "loading");
-        void init().catch((error) => console.error("Khởi tạo thất bại.", error));
+        void init().catch((error) => console.error("Initialisation failed.", error));
     },
 };
 
 let mapView = null;
-let requestSeq = 0;   // bỏ qua response cũ khi người dùng đổi địa điểm liên tục
+let requestSeq = 0;   // ignore stale responses when the user switches location quickly
 let selectedLocationId = null;
 let currentRefreshPending = false;
 let markersRefreshPending = false;
@@ -46,7 +46,7 @@ async function refreshMarkers() {
         const response = await api.getCurrentAll();
         mapView?.setAllMarkers(response.data);
     } catch (error) {
-        console.warn("Không làm mới được màu AQI trên bản đồ.", error);
+        console.warn("Could not refresh AQI colours on the map.", error);
     } finally {
         markersRefreshPending = false;
     }
@@ -62,21 +62,21 @@ async function refreshCurrent() {
         if (seq !== requestSeq) return;
         try {
             renderCurrent(views.current, response.data);
-            // Mock current.json luôn là địa điểm 1: không dùng nó để tô marker.
+            // Mock current.json is always location 1: don't use it to colour markers.
             if (!CONFIG.USE_MOCK) mapView?.setMarkerAqi(locationId, response.data.aqi_category);
-            views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(response.meta.generated_at)}`;
+            views.updatedAt.textContent = `Updated at ${fmt.dateTime(response.meta.generated_at)}`;
         } catch (renderError) {
-            console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
+            console.error("Failed to render current weather.", renderError);
             setState(views.current, "error", INVALID_DATA_MESSAGE, retrySelected);
         }
     } catch (error) {
-        console.warn("Không làm mới được thời tiết hiện tại.", error);
+        console.warn("Could not refresh current weather.", error);
     } finally {
         currentRefreshPending = false;
     }
 }
 
-// Lưu id vào localStorage và ghi ?city=<id> lên URL (giữ nguyên các tham số khác như mock=1).
+// Saves the id to localStorage and writes ?city=<id> to the URL (other params such as mock=1 are kept).
 function rememberLocation(locationId) {
     storeId(locationId);
     try {
@@ -84,7 +84,7 @@ function rememberLocation(locationId) {
         url.searchParams.set("city", String(locationId));
         history.replaceState(null, "", url);
     } catch {
-        // Origin bị sandbox/opaque: replaceState ném SecurityError, bỏ qua (giống storeId).
+        // Sandboxed/opaque origin: replaceState throws SecurityError; ignore (same as storeId).
     }
 }
 
@@ -92,13 +92,13 @@ async function selectLocation(locationId) {
     const seq = ++requestSeq;
     selectedLocationId = locationId;
     rememberLocation(locationId);
-    views.updatedAt.textContent = CONFIG.USE_MOCK ? "Chế độ dữ liệu mẫu (mock)" : "";
+    views.updatedAt.textContent = CONFIG.USE_MOCK ? "Mock data mode" : "";
     views.select.value = String(locationId);
     mapView?.select(locationId);
     destroyHourlyChart();
     for (const view of [views.current, views.hourly, views.daily]) setState(view, "loading");
 
-    // Hai request độc lập: một cái lỗi không làm hỏng cái còn lại.
+    // Two independent requests: one failing must not break the other.
     const [current, forecast] = await Promise.allSettled([
         api.getCurrent(locationId),
         api.getForecast(locationId),
@@ -108,11 +108,11 @@ async function selectLocation(locationId) {
     if (current.status === "fulfilled") {
         try {
             renderCurrent(views.current, current.value.data);
-            // Mock current.json luôn là địa điểm 1: marker lấy từ current-all.json.
+            // Mock current.json is always location 1: markers come from current-all.json.
             if (!CONFIG.USE_MOCK) mapView?.setMarkerAqi(locationId, current.value.data.aqi_category);
-            views.updatedAt.textContent = `Cập nhật lúc ${fmt.dateTime(current.value.meta.generated_at)}`;
+            views.updatedAt.textContent = `Updated at ${fmt.dateTime(current.value.meta.generated_at)}`;
         } catch (renderError) {
-            console.error("Lỗi hiển thị thời tiết hiện tại.", renderError);
+            console.error("Failed to render current weather.", renderError);
             setState(views.current, "error", INVALID_DATA_MESSAGE, retrySelected);
         }
     } else {
@@ -124,7 +124,7 @@ async function selectLocation(locationId) {
             renderHourly(views.hourly, forecast.value.data.hourly);
             renderDaily(views.daily, forecast.value.data.daily);
         } catch (renderError) {
-            console.error("Lỗi hiển thị dự báo.", renderError);
+            console.error("Failed to render forecast.", renderError);
             destroyHourlyChart();
             setState(views.hourly, "error", INVALID_DATA_MESSAGE, retrySelected);
             setState(views.daily, "error", INVALID_DATA_MESSAGE, retrySelected);
@@ -138,14 +138,14 @@ async function selectLocation(locationId) {
 }
 
 async function init() {
-    if (CONFIG.USE_MOCK) views.updatedAt.textContent = "Chế độ dữ liệu mẫu (mock)";
+    if (CONFIG.USE_MOCK) views.updatedAt.textContent = "Mock data mode";
 
     let locations;
     try {
         locations = (await api.getLocations()).data;
-        if (!Array.isArray(locations)) throw new TypeError("Danh sách địa điểm không hợp lệ");
+        if (!Array.isArray(locations)) throw new TypeError("Invalid location list");
     } catch (error) {
-        views.select.replaceChildren(new Option("Không tải được địa điểm"));
+        views.select.replaceChildren(new Option("Could not load locations"));
         for (const view of [views.current, views.hourly, views.daily, views.map]) {
             setState(view, "error", errorMessage(error), retryInit);
         }
@@ -153,9 +153,9 @@ async function init() {
         return;
     }
     if (!locations.length) {
-        views.select.replaceChildren(new Option("Chưa có địa điểm nào"));
+        views.select.replaceChildren(new Option("No locations yet"));
         for (const view of [views.current, views.hourly, views.daily, views.map]) {
-            setState(view, "empty", "Chưa có địa điểm nào");
+            setState(view, "empty", "No locations yet");
         }
         views.map.classList.add("map");
         return;
@@ -176,4 +176,4 @@ async function init() {
     }, CONFIG.REFRESH_MINUTES * 60 * 1000);
 }
 
-init().catch((error) => console.error("Khởi tạo thất bại.", error));
+init().catch((error) => console.error("Initialisation failed.", error));
