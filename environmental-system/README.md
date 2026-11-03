@@ -100,6 +100,32 @@ environmental-system/
 └── .env.example
 ```
 
+## Architecture
+
+![System Architecture and Request Flow](docs/images/system-architecture.png)
+
+_Figure 1. System Architecture and Request Flow._
+
+The system follows a client-server architecture. The frontend,
+running in the user's web browser, communicates with the FastAPI
+backend through REST API endpoints (/api/...).
+
+The FastAPI backend routes incoming requests to WeatherService,
+which handles business logic and retrieves weather and air quality
+data. WeatherService uses an in-memory TTLCache with a 15-minute
+expiration time to reduce repeated external API requests.
+
+When cached data is unavailable or expired, WeatherService
+retrieves forecast and air quality data from Open-Meteo, a
+third-party weather data provider.
+
+SQLite stores location metadata, while Leaflet and Chart.js
+are loaded through external CDNs. OpenStreetMap provides map tiles
+for the interactive map.
+
+The numbered arrows in Figure 1 illustrate the request and
+response sequence between the main components.
+
 ## Endpoints
 
 All endpoints are `GET`. Successful responses are `{ "data": ..., "meta": ... }`; errors are `{ "error": { "code", "message" } }`. Details are in [`docs/API.md`](docs/API.md).
