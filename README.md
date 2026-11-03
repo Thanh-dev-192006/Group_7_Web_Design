@@ -15,8 +15,19 @@ A web dashboard for current weather, forecasts and air quality (US EPA AQI) in 1
 
 ## Screenshots
 
-<!-- Placeholder: add desktop (1280px) and mobile (390px) screenshots here. -->
-_Screenshots will be added once the UI is finalised._
+Actual browser captures of the frontend with the bundled mock data (`?mock=1&city=1`), not live weather. Desktop viewport: **1280 × 900**; mobile viewport: **375 × 900**, captured at full page height.
+
+![Full desktop dashboard](environmental-system/docs/images/screenshots/ui-desktop-home.png)
+
+The desktop dashboard places the city picker and AQI map beside current conditions, the 48-hour chart and the seven-day forecast. The current card includes advice for sensitive groups.
+
+![Full mobile dashboard at 375px](environmental-system/docs/images/screenshots/ui-mobile-home.png)
+
+At 375px, the weather panels appear above the city picker and map. The seven-day forecast scrolls horizontally within its panel.
+
+See [section 3.2: interface screenshots](environmental-system/docs/UI_Screenshots.md) for all 11 captures, including the map, current/AQI advice, 48-hour chart, seven-day forecast, rain alert, error/Retry and desktop/mobile dark mode, with captions and reproduction instructions.
+
+The captures include the geographic basemap and AQI markers. When OpenStreetMap tiles are unavailable, the application uses CARTO Voyager with the project's browser basemap key.
 
 ## Architecture
 
