@@ -16,10 +16,10 @@ const TILE_SOURCES = [
         },
     },
     {
-        url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        // Public browser basemap key supplied for this project (not a backend credential).
+        url: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_518f_1_f23d2e915e0ab850dc1546d2",
         options: {
             maxZoom: 19,
-            subdomains: "abcd",
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         },
     },
