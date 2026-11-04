@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     open_meteo_air_quality_url: str = "https://air-quality-api.open-meteo.com/v1/air-quality"
     http_timeout_seconds: float = 10.0
 
+    # IANA time zone used for the forecast's daily aggregation (daily[].date, min/max, sums).
+    # API datetimes stay UTC.
+    forecast_timezone: str = "Asia/Ho_Chi_Minh"
+
     # Open-Meteo cache TTL, seconds
     cache_ttl_seconds: int = 900
 

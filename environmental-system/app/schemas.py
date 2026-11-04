@@ -171,18 +171,25 @@ class HourlyPoint(BaseModel):
     precipitation_probability_pct: float | None = None
     precipitation_mm: float | None = None
     weather_code: int | None = None
+    apparent_temperature_c: float | None = Field(default=None, description="Feels-like temperature, deg C")
+    relative_humidity_pct: float | None = None
+    wind_speed_kmh: float | None = None
+    uv_index: float | None = None
     pm2_5: float | None = None
     us_aqi: float | None = None
     aqi_category: AqiCategory | None = None
 
 
 class DailyPoint(BaseModel):
-    date: date  # UTC date
+    date: date  # calendar day in forecast_timezone (Vietnam)
     temperature_max_c: float | None = None
     temperature_min_c: float | None = None
     precipitation_sum_mm: float | None = None
     precipitation_probability_max_pct: float | None = None
     weather_code: int | None = None
+    sunrise: UTCDatetime | None = None
+    sunset: UTCDatetime | None = None
+    uv_index_max: float | None = None
 
 
 class Forecast(BaseModel):
@@ -198,6 +205,10 @@ class Forecast(BaseModel):
                             "precipitation_probability_pct": 0.0,
                             "precipitation_mm": 0.0,
                             "weather_code": 1,
+                            "apparent_temperature_c": 28.4,
+                            "relative_humidity_pct": 78.0,
+                            "wind_speed_kmh": 9.4,
+                            "uv_index": 0.0,
                             "pm2_5": 24.1,
                             "us_aqi": 69.0,
                             "aqi_category": "moderate",
@@ -211,6 +222,9 @@ class Forecast(BaseModel):
                             "precipitation_sum_mm": 1.2,
                             "precipitation_probability_max_pct": 60.0,
                             "weather_code": 61,
+                            "sunrise": "2026-10-20T22:58:00Z",
+                            "sunset": "2026-10-21T10:41:00Z",
+                            "uv_index_max": 8.1,
                         }
                     ],
                 }

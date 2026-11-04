@@ -7,12 +7,13 @@ Design notes:
 - The two APIs can differ in hour count, so air quality is joined by `time`, not index.
 - Missing values stay None (never 0).
 - If air quality fails, weather is still returned with null AQI fields; a forecast failure is a 502/503.
-- All times are UTC (timezone=GMT); `daily[].date` is the UTC date.
+- API datetimes are UTC. The forecast is requested in `forecast_timezone`, so its naive local times are converted
+  to UTC with `utc_offset_seconds`, and `daily[].date` is a local calendar day. Air quality is requested in GMT.
 """
 import concurrent.futures
 import logging
 from collections.abc import Callable
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.config import settings
 from app.errors import AppError, UpstreamError
@@ -28,12 +29,17 @@ MAX_DAYS = 7                 # Open-Meteo Air Quality forecasts at most ~7 days
 MAX_HOURS = MAX_DAYS * 24    # 168
 
 
-def _parse_time(value: str) -> datetime:
-    """Parse '2026-10-28T14:00' (naive, GMT) into a UTC datetime."""
+def _parse_time(value: str, utc_offset_seconds: int = 0) -> datetime:
+    """Parse '2026-10-28T14:00' into a UTC datetime; naive values are local time at the given UTC offset."""
     parsed = datetime.fromisoformat(value)
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
+        return (parsed - timedelta(seconds=utc_offset_seconds)).replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def _utc_offset(payload: dict) -> int:
+    """Forecast payload's `utc_offset_seconds` (0 when absent, e.g. GMT)."""
+    return int(payload.get("utc_offset_seconds") or 0)
 
 
 def _at(block: dict, key: str, index: int):
@@ -138,11 +144,11 @@ class WeatherService:
             return {}
 
     def _build_current(self, location: Location) -> CurrentWeather:
-        weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=1)
+        weather = self.client.fetch_current(location.lat, location.lon)
         air = self._fetch_air_quality(location)
         try:
             cur = weather["current"]
-            observed_at = _parse_time(cur["time"])
+            observed_at = _parse_time(cur["time"], _utc_offset(weather))
         except (KeyError, TypeError, ValueError) as exc:
             raise UpstreamError("Weather data source returned an invalid response") from exc
 
@@ -171,19 +177,19 @@ class WeatherService:
         weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=MAX_DAYS + 1)
         air = self._fetch_air_quality(location)
         try:
-            hourly = self._build_hourly(weather["hourly"], air.get("hourly") or {})
-            daily = self._build_daily(weather["daily"])
+            hourly = self._build_hourly(weather["hourly"], air.get("hourly") or {}, _utc_offset(weather))
+            daily = self._build_daily(weather["daily"], _utc_offset(weather))
         except (KeyError, TypeError, ValueError) as exc:
             raise UpstreamError("Weather data source returned an invalid response") from exc
         return Forecast(location_id=location.id, hourly=hourly, daily=daily)
 
-    def _build_hourly(self, hourly: dict, air_hourly: dict) -> list[HourlyPoint]:
+    def _build_hourly(self, hourly: dict, air_hourly: dict, utc_offset_seconds: int = 0) -> list[HourlyPoint]:
         air_by_time = {
             _parse_time(t): i for i, t in enumerate(air_hourly.get("time") or [])
         }
         points: list[HourlyPoint] = []
         for i, raw_time in enumerate(hourly["time"]):
-            time = _parse_time(raw_time)
+            time = _parse_time(raw_time, utc_offset_seconds)
             j = air_by_time.get(time)
             us_aqi = _at(air_hourly, "us_aqi", j) if j is not None else None
             points.append(HourlyPoint(
@@ -192,6 +198,10 @@ class WeatherService:
                 precipitation_probability_pct=_at(hourly, "precipitation_probability", i),
                 precipitation_mm=_at(hourly, "precipitation", i),
                 weather_code=_at(hourly, "weather_code", i),
+                apparent_temperature_c=_at(hourly, "apparent_temperature", i),
+                relative_humidity_pct=_at(hourly, "relative_humidity_2m", i),
+                wind_speed_kmh=_at(hourly, "wind_speed_10m", i),
+                uv_index=_at(hourly, "uv_index", i),
                 pm2_5=_at(air_hourly, "pm2_5", j) if j is not None else None,
                 us_aqi=us_aqi,
                 aqi_category=category_from_us_aqi(us_aqi),
@@ -199,7 +209,11 @@ class WeatherService:
         return points
 
     @staticmethod
-    def _build_daily(daily: dict) -> list[DailyPoint]:
+    def _build_daily(daily: dict, utc_offset_seconds: int = 0) -> list[DailyPoint]:
+        def local_time(key: str, index: int) -> datetime | None:
+            raw = _at(daily, key, index)
+            return _parse_time(raw, utc_offset_seconds) if raw else None
+
         return [
             DailyPoint(
                 date=date.fromisoformat(raw_date),
@@ -208,6 +222,9 @@ class WeatherService:
                 precipitation_sum_mm=_at(daily, "precipitation_sum", i),
                 precipitation_probability_max_pct=_at(daily, "precipitation_probability_max", i),
                 weather_code=_at(daily, "weather_code", i),
+                sunrise=local_time("sunrise", i),
+                sunset=local_time("sunset", i),
+                uv_index_max=_at(daily, "uv_index_max", i),
             )
             for i, raw_date in enumerate(daily["time"])
         ][:MAX_DAYS]

@@ -3,7 +3,8 @@ import { fmt, weatherText } from "../format.js";
 import { el, setState } from "../ui.js";
 import { weatherIcon } from "../weather-icons.js";
 
-export function renderDaily(container, daily) {
+// hrefFor(day) gives the detail-page URL each card links to.
+export function renderDaily(container, daily, { hrefFor } = {}) {
     if (!Array.isArray(daily) || daily.length === 0) {
         setState(container, "empty", "No daily forecast data");
         return;
@@ -11,7 +12,7 @@ export function renderDaily(container, daily) {
 
     const list = el("ul", { className: "daily", ariaLabel: "Daily weather forecast" });
     for (const day of daily) {
-        const item = el("li", { className: "daily__item" },
+        const link = el("a", { className: "daily__btn", href: hrefFor?.(day) ?? "forecast.html", title: "Show day details" },
             el("span", { className: "daily__day" }, fmt.weekday(day.date)),
             el("span", { className: "daily__icon", ariaHidden: "true" }, weatherIcon(day.weather_code)),
             el("span", { className: "daily__desc" }, weatherText(day.weather_code)),
@@ -24,7 +25,7 @@ export function renderDaily(container, daily) {
                 fmt.num(day.precipitation_probability_max_pct, "%"),
             ),
         );
-        list.append(item);
+        list.append(el("li", { className: "daily__item" }, link));
     }
     setState(container, "ready");
     container.append(list);

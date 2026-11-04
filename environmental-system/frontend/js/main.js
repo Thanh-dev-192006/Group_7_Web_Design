@@ -9,6 +9,7 @@ import { renderLocationPicker } from "./components/location-picker.js";
 import { createMap } from "./components/map.js";
 import { fmt } from "./format.js";
 import { pickInitialLocation, readStoredId, storeId } from "./location-memory.js";
+import { pageUrl } from "./page-links.js";
 import { errorMessage, setState } from "./ui.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -18,6 +19,7 @@ const views = {
     current: $("#current"),
     hourly: $("#hourly"),
     daily: $("#daily"),
+    dailyMore: $("#daily-more"),
     updatedAt: $("#updated-at"),
 };
 
@@ -88,6 +90,9 @@ function rememberLocation(locationId) {
     }
 }
 
+// Link to the detail page for the selected location (and a day, when given); keeps ?mock=1.
+const detailUrl = (day) => pageUrl("forecast.html", { city: selectedLocationId, day, mock: CONFIG.USE_MOCK });
+
 async function selectLocation(locationId) {
     const seq = ++requestSeq;
     selectedLocationId = locationId;
@@ -96,6 +101,7 @@ async function selectLocation(locationId) {
     views.select.value = String(locationId);
     mapView?.select(locationId);
     destroyHourlyChart();
+    views.dailyMore.href = detailUrl();
     for (const view of [views.current, views.hourly, views.daily]) setState(view, "loading");
 
     // Two independent requests: one failing must not break the other.
@@ -121,8 +127,10 @@ async function selectLocation(locationId) {
 
     if (forecast.status === "fulfilled") {
         try {
-            renderHourly(views.hourly, forecast.value.data.hourly);
-            renderDaily(views.daily, forecast.value.data.daily);
+            const { hourly, daily } = forecast.value.data;
+            // Mock forecast.json holds 168 hours whatever is requested: the chart shows the first FORECAST_HOURS.
+            renderHourly(views.hourly, Array.isArray(hourly) ? hourly.slice(0, CONFIG.FORECAST_HOURS) : hourly);
+            renderDaily(views.daily, daily, { hrefFor: (day) => detailUrl(day.date) });
         } catch (renderError) {
             console.error("Failed to render forecast.", renderError);
             destroyHourlyChart();

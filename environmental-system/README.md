@@ -152,7 +152,7 @@ Rules worth knowing:
 - **Hourly data is filtered at serve time:** only points at or after the current UTC hour are returned, so an older cached forecast does not start in the past.
 - **AQI is optional.** If the air-quality API fails, weather is still returned and all AQI fields (`pm2_5`, `us_aqi`, `aqi_category`) are `null`. The same happens for hours beyond the range of the air-quality data. If the weather API fails, the endpoint returns 502/503.
 - **Missing values are `null`**, never `0`. Air-quality and weather hours are joined by timestamp, not by index.
-- **Times are UTC** (`daily[].date` is the UTC date); the frontend converts to Vietnam time for display.
+- **Datetimes are UTC; daily values are local days.** The forecast is requested with `timezone=FORECAST_TIMEZONE` (default `Asia/Ho_Chi_Minh`), so `daily[].date`, min/max and sums are Vietnam calendar days; hourly and current times are converted back to UTC using `utc_offset_seconds`. Air quality is requested in GMT. The frontend converts times to Vietnam time for display.
 - **AQI categories are decided by the backend** (`app/services/aqi.py`, US EPA scale from the `us_aqi` value). The frontend only displays them.
 - **`/api/current`** fetches all locations in parallel and skips locations that fail. It returns an error only when every location fails.
 
@@ -165,7 +165,6 @@ Rules worth knowing:
 
 ## Known limitations
 
-- **Daily forecast cards use UTC days.** Open-Meteo is called with `timezone=GMT` and the frontend formats the weekday in UTC, so between 00:00 and 06:59 Vietnam time the first card is the previous Vietnam date.
 - **The cache is per process.** Each uvicorn worker has its own copy.
 - **No single-flight on a cold cache.** Concurrent requests for the same uncached location each call Open-Meteo.
 
