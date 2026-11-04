@@ -1,19 +1,18 @@
 // Row of hourly weather icons above the temperature chart, positioned on the chart's x scale.
 import { CONFIG } from "../config.js";
-import { localHour } from "../day-detail.js";
+import { isDaylight, localHour } from "../day-detail.js";
 import { fmt, weatherText } from "../format.js";
 import { el } from "../ui.js";
 import { weatherIcon } from "../weather-icons.js";
 
 const NARROW_CHART_PX = 560;
-const isDaytime = (hour) => hour >= 6 && hour < 18;
 
 /** One item per hour; layoutHourIcons() decides which are shown and where. */
-export function renderHourIcons(points) {
+export function renderHourIcons(points, { sunrise, sunset } = {}) {
     const items = points.map((point) => el("li", { className: "hour-icons__item", hidden: true },
         el("span", { className: "hour-icons__time", ariaHidden: "true" }, fmt.time(point.time)),
         el("span", { className: "hour-icons__icon", ariaHidden: "true" },
-            weatherIcon(point.weather_code, isDaytime(localHour(point.time, CONFIG.TIMEZONE)))),
+            weatherIcon(point.weather_code, isDaylight(point.time, sunrise, sunset, localHour(point.time, CONFIG.TIMEZONE)))),
         el("span", { className: "visually-hidden" }, `${fmt.time(point.time)}, ${weatherText(point.weather_code)}`),
     ));
     return el("ul", { className: "hour-icons", ariaLabel: "Weather by hour" }, ...items);

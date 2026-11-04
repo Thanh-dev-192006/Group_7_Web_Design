@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildDays, groupByLocalDate, localDateKey, partialDayNote, pickDayIndex, summarizeDay } from "../js/day-detail.js";
+import { buildDays, groupByLocalDate, isDaylight, localDateKey, partialDayNote, pickDayIndex, summarizeDay } from "../js/day-detail.js";
 
 const TZ = "Asia/Ho_Chi_Minh";
 const point = (time, temperature_c = null, chance = null, mm = null) => ({
@@ -110,4 +110,25 @@ test("partialDayNote only applies to a partial first day", () => {
     assert.equal(partialDayNote({ startHour: 9 }, 0), " · from 09:00");
     assert.equal(partialDayNote({ startHour: 0 }, 0), "");
     assert.equal(partialDayNote({ startHour: 13 }, 1), "");
+});
+
+test("buildDays carries sunrise, sunset and UV max (daily first, hourly fallback)", () => {
+    const points = hours("2026-11-04T17:00:00Z", 2, (i) => ({ uv_index: [1.5, 6.2][i] }));
+    const daily = [{ date: "2026-11-05", sunrise: "2026-11-04T22:58:00Z", sunset: "2026-11-05T10:12:00Z", uv_index_max: 8.1 }];
+    const [day] = buildDays(points, daily, TZ);
+    assert.deepEqual([day.sunrise, day.sunset, day.uvMax], ["2026-11-04T22:58:00Z", "2026-11-05T10:12:00Z", 8.1]);
+    const [bare] = buildDays(points, [], TZ);
+    assert.deepEqual([bare.sunrise, bare.sunset, bare.uvMax], [null, null, 6.2]);
+    assert.equal(buildDays(hours("2026-11-04T17:00:00Z", 1), [], TZ)[0].uvMax, null);
+});
+
+test("isDaylight uses sunrise/sunset when known, else the 06-18 rule", () => {
+    const rise = "2026-11-04T23:00:00Z";   // 06:00 local
+    const set = "2026-11-05T10:19:00Z";    // 17:19 local
+    assert.equal(isDaylight("2026-11-05T10:00:00Z", rise, set, 17), true);
+    assert.equal(isDaylight("2026-11-05T10:30:00Z", rise, set, 17), false);
+    assert.equal(isDaylight("2026-11-04T22:00:00Z", rise, set, 5), false);
+    assert.equal(isDaylight("x", null, null, 17), true);
+    assert.equal(isDaylight("x", null, set, 18), false);
+    assert.equal(isDaylight("x", null, null, 3), false);
 });

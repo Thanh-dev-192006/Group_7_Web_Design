@@ -40,12 +40,26 @@
 
 .fp-caption { margin: 0; color: var(--text-muted); }
 .fp-day { display: grid; gap: var(--gap); }
-.fp-card .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fp-card .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }   /* 7 stats: 4 + 3 */
 .fp-weather { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; }
 .fp-weather__icon { font-size: 2.25rem; line-height: 1; }
 .fp-weather__desc { font-weight: 600; }
 .fp-text { margin: .75rem 0 0; }
 .fp-total { margin: .6rem 0 0; color: var(--text-muted); }
+
+.segmented { display: inline-flex; margin-bottom: .75rem; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.segmented__btn {
+    padding: .3rem .9rem;
+    font: inherit;
+    font-size: .85rem;
+    color: var(--text);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+.segmented__btn[aria-pressed="true"] { color: var(--surface); background: var(--primary); }
+.segmented__btn:focus-visible { outline: 2px solid var(--text); outline-offset: -3px; }
+.segmented__btn:disabled { color: var(--text-muted); cursor: not-allowed; opacity: .6; }
 
 .fp-note { margin: .6rem 0 0; color: var(--text-muted); font-size: .85rem; }
 

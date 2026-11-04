@@ -129,16 +129,29 @@ Thời tiết + AQI hiện tại của một địa điểm. Cache 15 phút (`me
     "location_id": 1,
     "hourly": [
       { "time": "2026-10-21T03:00:00Z", "temperature_c": 25.9, "precipitation_probability_pct": 0.0,
-        "precipitation_mm": 0.0, "weather_code": 1, "pm2_5": 24.1, "us_aqi": 69.0, "aqi_category": "moderate" }
+        "precipitation_mm": 0.0, "weather_code": 1, "apparent_temperature_c": 28.4, "relative_humidity_pct": 78.0,
+        "wind_speed_kmh": 9.4, "uv_index": 0.0, "pm2_5": 24.1, "us_aqi": 69.0, "aqi_category": "moderate" }
     ],
     "daily": [
       { "date": "2026-10-21", "temperature_max_c": 31.0, "temperature_min_c": 23.0,
-        "precipitation_sum_mm": 1.2, "precipitation_probability_max_pct": 60.0, "weather_code": 61 }
+        "precipitation_sum_mm": 1.2, "precipitation_probability_max_pct": 60.0, "weather_code": 61,
+        "sunrise": "2026-10-20T22:58:00Z", "sunset": "2026-10-21T10:41:00Z", "uv_index_max": 8.1 }
     ]
   },
   "meta": { "generated_at": "2026-10-21T03:00:00Z", "count": null, "cached": false }
 }
 ```
+
+Trường bổ sung (đều có thể `null`):
+
+| Đối tượng | Trường | Ý nghĩa |
+|---|---|---|
+| `hourly[]` | `apparent_temperature_c` | Nhiệt độ cảm nhận (°C) |
+| `hourly[]` | `relative_humidity_pct` | Độ ẩm tương đối (%) |
+| `hourly[]` | `wind_speed_kmh` | Tốc độ gió (km/h) |
+| `hourly[]` | `uv_index` | Chỉ số UV |
+| `daily[]` | `sunrise`, `sunset` | Giờ mặt trời mọc/lặn, ISO 8601 **UTC** (`...Z`) |
+| `daily[]` | `uv_index_max` | Chỉ số UV cao nhất trong ngày |
 
 Ghi chú:
 - Dữ liệu bắt đầu từ **giờ hiện tại** (UTC, làm tròn xuống giờ). `hours` tối đa 168 = 7 ngày, nên `days` cũng tối đa 7 (Air Quality API của Open-Meteo chỉ dự báo được ~7 ngày).

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { peakAqi, summaryText, temperatureExtremes } from "../js/day-summary-text.js";
+import { feelsLikeText, humidityWindText, peakAqi, summaryText, temperatureExtremes } from "../js/day-summary-text.js";
 
 const formatTime = (iso) => iso.slice(11, 16);
 const point = (hour, temperature_c) => ({ time: `2026-11-05T${String(hour).padStart(2, "0")}:00:00Z`, temperature_c });
@@ -58,4 +58,29 @@ test("empty input gives an empty string", () => {
     assert.equal(summaryText(null, formatTime), "");
     assert.equal(summaryText({ points: [], summary: summary({ high: null, low: null, rainChanceMax: null, precipitationTotal: null }) }, formatTime), "");
     assert.equal(summaryText({ points: [] }, formatTime), "");
+});
+
+test("temperatureExtremes can use another field (feels like)", () => {
+    const points = [{ time: "a", apparent_temperature_c: 30 }, { time: "b", apparent_temperature_c: 35 }, { time: "c", apparent_temperature_c: null }];
+    const { highPoint, lowPoint } = temperatureExtremes(points, "apparent_temperature_c");
+    assert.equal(highPoint.time, "b");
+    assert.equal(lowPoint.time, "a");
+});
+
+test("humidityWindText gives the range, and omits parts without data", () => {
+    const points = [{ relative_humidity_pct: 62.2, wind_speed_kmh: 8 }, { relative_humidity_pct: 88, wind_speed_kmh: 17.6 }, {}];
+    assert.equal(humidityWindText(points), "Humidity 62–88% · Wind up to 18 km/h");
+    assert.equal(humidityWindText([{ relative_humidity_pct: 70 }]), "Humidity 70%");
+    assert.equal(humidityWindText([{ wind_speed_kmh: 5 }]), "Wind up to 5 km/h");
+    assert.equal(humidityWindText([{}]), "");
+    assert.equal(humidityWindText(undefined), "");
+});
+
+test("feelsLikeText gives the feels-like high and low, or an empty string", () => {
+    const at = (hour, apparent_temperature_c) => ({ time: `2026-11-05T${String(hour).padStart(2, "0")}:00:00Z`, apparent_temperature_c });
+    assert.equal(feelsLikeText([at(4, 27.2), at(13, 35.6), at(14, null)], formatTime),
+        "Feels like up to 36° around 13:00, down to 27° around 04:00.");
+    assert.equal(feelsLikeText([at(4, null)], formatTime), "");
+    assert.equal(feelsLikeText([], formatTime), "");
+    assert.equal(feelsLikeText(undefined, formatTime), "");
 });

@@ -3,14 +3,14 @@
 const isNumber = (value) => value != null && Number.isFinite(Number(value));
 
 /** Hourly points holding the day's highest and lowest temperature (earliest hour on ties; null when no valid temperature). */
-export function temperatureExtremes(points) {
+export function temperatureExtremes(points, field = "temperature_c") {
     let highPoint = null;
     let lowPoint = null;
     for (const point of Array.isArray(points) ? points : []) {
-        if (!isNumber(point.temperature_c)) continue;
-        const temp = Number(point.temperature_c);
-        if (highPoint === null || temp > Number(highPoint.temperature_c)) highPoint = point;
-        if (lowPoint === null || temp < Number(lowPoint.temperature_c)) lowPoint = point;
+        if (!isNumber(point[field])) continue;
+        const temp = Number(point[field]);
+        if (highPoint === null || temp > Number(highPoint[field])) highPoint = point;
+        if (lowPoint === null || temp < Number(lowPoint[field])) lowPoint = point;
     }
     return { highPoint, lowPoint };
 }
@@ -22,6 +22,30 @@ export function peakAqi(points) {
         if (isNumber(point.us_aqi) && (peak === null || Number(point.us_aqi) > Number(peak.us_aqi))) peak = point;
     }
     return peak;
+}
+
+/** "Feels like up to 36° around 13:00, down to 27° around 04:00."; "" when no hour has a feels-like value. */
+export function feelsLikeText(points, formatTime) {
+    const { highPoint, lowPoint } = temperatureExtremes(points, "apparent_temperature_c");
+    if (!highPoint) return "";
+    const part = (prefix, point) => `${prefix} ${Math.round(Number(point.apparent_temperature_c))}° around ${formatTime(point.time)}`;
+    return `Feels like ${part("up to", highPoint)}, ${part("down to", lowPoint)}.`;
+}
+
+const valuesOf = (points, field) => (Array.isArray(points) ? points : [])
+    .map((point) => point[field]).filter(isNumber).map(Number);
+
+/** "Humidity 62-88% · Wind up to 18 km/h"; parts without data are omitted, "" when there is none. */
+export function humidityWindText(points) {
+    const humidity = valuesOf(points, "relative_humidity_pct");
+    const wind = valuesOf(points, "wind_speed_kmh");
+    const parts = [];
+    if (humidity.length) {
+        const [min, max] = [Math.round(Math.min(...humidity)), Math.round(Math.max(...humidity))];
+        parts.push(min === max ? `Humidity ${min}%` : `Humidity ${min}–${max}%`);
+    }
+    if (wind.length) parts.push(`Wind up to ${Math.round(Math.max(...wind))} km/h`);
+    return parts.join(" · ");
 }
 
 // The time is only given when the hourly extreme agrees with the number shown (daily values can be more extreme).

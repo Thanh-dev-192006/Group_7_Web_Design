@@ -262,3 +262,72 @@ def test_forecast_requests_local_timezone_and_air_quality_gmt():
     make_service(handler).forecast(LOCATION, hours=48, days=7)
     assert params["forecast"]["timezone"] == "Asia/Ho_Chi_Minh"
     assert params["air"]["timezone"] == "GMT"
+
+
+def test_extra_hourly_and_daily_fields_are_mapped():
+    payload = local_forecast_payload()
+    payload["hourly"].update({
+        "apparent_temperature": [30.0 + i for i in range(192)],
+        "relative_humidity_2m": [80] * 192,
+        "wind_speed_10m": [12.5] * 192,
+        "uv_index": [0.0, 1.5] + [3.0] * 190,
+    })
+    payload["daily"].update({
+        "sunrise": ["2026-11-05T05:58"] + [None] * 7,
+        "sunset": ["2026-11-05T17:12"] + [None] * 7,
+        "uv_index_max": [8.1] * 8,
+    })
+    full = make_service(ok_handler(forecast=payload))._build_forecast(LOCATION)
+
+    hour = full.hourly[1]
+    assert (hour.apparent_temperature_c, hour.relative_humidity_pct, hour.wind_speed_kmh, hour.uv_index) == (31.0, 80, 12.5, 1.5)
+    day = full.daily[0]
+    assert day.sunrise == datetime(2026, 11, 4, 22, 58, tzinfo=timezone.utc)   # local 05:58 at UTC+7
+    assert day.sunset == datetime(2026, 11, 5, 10, 12, tzinfo=timezone.utc)
+    assert day.uv_index_max == 8.1
+    assert full.daily[1].sunrise is None and full.daily[1].sunset is None
+
+
+def test_missing_extra_columns_are_none():
+    full = make_service(ok_handler())._build_forecast(LOCATION)
+    hour = full.hourly[0]
+    assert hour.apparent_temperature_c is None and hour.relative_humidity_pct is None
+    assert hour.wind_speed_kmh is None and hour.uv_index is None
+    day = full.daily[0]
+    assert day.sunrise is None and day.sunset is None and day.uv_index_max is None
+
+
+def test_forecast_request_asks_for_the_extra_variables():
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if not request.url.host.startswith("air-quality"):
+            seen.update(request.url.params)
+        return ok_handler()(request)
+
+    make_service(handler).forecast(LOCATION, hours=48, days=7)
+    for name in ("apparent_temperature", "relative_humidity_2m", "wind_speed_10m", "uv_index"):
+        assert name in seen["hourly"].split(",")
+    for name in ("sunrise", "sunset", "uv_index_max"):
+        assert name in seen["daily"].split(",")
+
+
+def test_current_and_forecast_requests_ask_for_separate_blocks():
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if not request.url.host.startswith("air-quality"):
+            seen.append(dict(request.url.params))
+        return ok_handler()(request)
+
+    service = make_service(handler)
+    service.current(LOCATION)
+    current_params = seen[-1]
+    assert "current" in current_params
+    assert "hourly" not in current_params and "daily" not in current_params
+    assert current_params["timezone"] == "Asia/Ho_Chi_Minh"
+
+    service._build_forecast(LOCATION)
+    forecast_params = seen[-1]
+    assert "hourly" in forecast_params and "daily" in forecast_params
+    assert "current" not in forecast_params

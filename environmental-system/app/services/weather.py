@@ -144,7 +144,7 @@ class WeatherService:
             return {}
 
     def _build_current(self, location: Location) -> CurrentWeather:
-        weather = self.client.fetch_forecast(location.lat, location.lon, forecast_days=1)
+        weather = self.client.fetch_current(location.lat, location.lon)
         air = self._fetch_air_quality(location)
         try:
             cur = weather["current"]
@@ -178,7 +178,7 @@ class WeatherService:
         air = self._fetch_air_quality(location)
         try:
             hourly = self._build_hourly(weather["hourly"], air.get("hourly") or {}, _utc_offset(weather))
-            daily = self._build_daily(weather["daily"])
+            daily = self._build_daily(weather["daily"], _utc_offset(weather))
         except (KeyError, TypeError, ValueError) as exc:
             raise UpstreamError("Weather data source returned an invalid response") from exc
         return Forecast(location_id=location.id, hourly=hourly, daily=daily)
@@ -198,6 +198,10 @@ class WeatherService:
                 precipitation_probability_pct=_at(hourly, "precipitation_probability", i),
                 precipitation_mm=_at(hourly, "precipitation", i),
                 weather_code=_at(hourly, "weather_code", i),
+                apparent_temperature_c=_at(hourly, "apparent_temperature", i),
+                relative_humidity_pct=_at(hourly, "relative_humidity_2m", i),
+                wind_speed_kmh=_at(hourly, "wind_speed_10m", i),
+                uv_index=_at(hourly, "uv_index", i),
                 pm2_5=_at(air_hourly, "pm2_5", j) if j is not None else None,
                 us_aqi=us_aqi,
                 aqi_category=category_from_us_aqi(us_aqi),
@@ -205,7 +209,11 @@ class WeatherService:
         return points
 
     @staticmethod
-    def _build_daily(daily: dict) -> list[DailyPoint]:
+    def _build_daily(daily: dict, utc_offset_seconds: int = 0) -> list[DailyPoint]:
+        def local_time(key: str, index: int) -> datetime | None:
+            raw = _at(daily, key, index)
+            return _parse_time(raw, utc_offset_seconds) if raw else None
+
         return [
             DailyPoint(
                 date=date.fromisoformat(raw_date),
@@ -214,6 +222,9 @@ class WeatherService:
                 precipitation_sum_mm=_at(daily, "precipitation_sum", i),
                 precipitation_probability_max_pct=_at(daily, "precipitation_probability_max", i),
                 weather_code=_at(daily, "weather_code", i),
+                sunrise=local_time("sunrise", i),
+                sunset=local_time("sunset", i),
+                uv_index_max=_at(daily, "uv_index_max", i),
             )
             for i, raw_date in enumerate(daily["time"])
         ][:MAX_DAYS]

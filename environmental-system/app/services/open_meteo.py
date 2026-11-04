@@ -19,10 +19,13 @@ FORECAST_CURRENT_VARS = [
     "temperature_2m", "relative_humidity_2m", "apparent_temperature", "is_day",
     "precipitation", "weather_code", "wind_speed_10m", "wind_direction_10m",
 ]
-FORECAST_HOURLY_VARS = ["temperature_2m", "precipitation_probability", "precipitation", "weather_code"]
+FORECAST_HOURLY_VARS = [
+    "temperature_2m", "precipitation_probability", "precipitation", "weather_code",
+    "apparent_temperature", "relative_humidity_2m", "wind_speed_10m", "uv_index",
+]
 FORECAST_DAILY_VARS = [
     "weather_code", "temperature_2m_max", "temperature_2m_min",
-    "precipitation_sum", "precipitation_probability_max",
+    "precipitation_sum", "precipitation_probability_max", "sunrise", "sunset", "uv_index_max",
 ]
 # Variables requested from the Air Quality API (forecast limited to ~7 days)
 AIR_CURRENT_VARS = ["pm2_5", "us_aqi"]
@@ -48,11 +51,21 @@ class OpenMeteoClient:
             logger.warning("Open-Meteo bad response: %s", exc)
             raise UpstreamError("Weather data source returned an invalid response") from exc
 
-    def fetch_forecast(self, lat: float, lon: float, *, forecast_days: int = 7) -> dict:
+    def fetch_current(self, lat: float, lon: float) -> dict:
+        """Current conditions only (no hourly/daily blocks, so fewer variables count against the quota)."""
         return self._get(settings.open_meteo_forecast_url, {
             "latitude": lat,
             "longitude": lon,
             "current": ",".join(FORECAST_CURRENT_VARS),
+            "timezone": settings.forecast_timezone,
+            "wind_speed_unit": "kmh",
+        })
+
+    def fetch_forecast(self, lat: float, lon: float, *, forecast_days: int = 7) -> dict:
+        """Hourly + daily blocks only; current conditions come from fetch_current."""
+        return self._get(settings.open_meteo_forecast_url, {
+            "latitude": lat,
+            "longitude": lon,
             "hourly": ",".join(FORECAST_HOURLY_VARS),
             "daily": ",".join(FORECAST_DAILY_VARS),
             "forecast_days": forecast_days,

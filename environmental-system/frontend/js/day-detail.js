@@ -79,9 +79,16 @@ function daySummary(points, dailyEntry) {
     };
 }
 
+// Highest UV of the day: the daily entry if present, else the highest hourly value.
+function dayUvMax(points, dailyEntry) {
+    if (dailyEntry?.uv_index_max != null) return Number(dailyEntry.uv_index_max);
+    const values = numbers(points, "uv_index");
+    return values.length ? Math.max(...values) : null;
+}
+
 /**
  * Up to `maxDays` local days (in order, empty days skipped):
- * { date, points, summary, weatherCode, startHour } where summary prefers the daily entry, and startHour is the local hour of the first point.
+ * { date, points, summary, weatherCode, startHour, sunrise, sunset, uvMax } where summary prefers the daily entry, and startHour is the local hour of the first point.
  */
 export function buildDays(hourly, daily, timeZone, maxDays = 7) {
     const dailyByDate = new Map((Array.isArray(daily) ? daily : []).map((entry) => [entry.date, entry]));
@@ -94,12 +101,22 @@ export function buildDays(hourly, daily, timeZone, maxDays = 7) {
             summary: daySummary(points, dailyByDate.get(date)),
             weatherCode: dayWeatherCode(points, dailyByDate.get(date)),
             startHour: localHour(points[0].time, timeZone),
+            sunrise: dailyByDate.get(date)?.sunrise ?? null,
+            sunset: dailyByDate.get(date)?.sunset ?? null,
+            uvMax: dayUvMax(points, dailyByDate.get(date)),
         }));
 }
 
 /** Index of the day with `date`, else 0. */
 export function pickDayIndex(days, date) {
     return Math.max(0, days.findIndex((day) => day.date === date));
+}
+
+/** Daylight at `iso`: between the day's sunrise and sunset when both are known, else a 06:00-18:00 local rule. */
+export function isDaylight(iso, sunrise, sunset, localHourOfDay) {
+    const [time, rise, set] = [iso, sunrise, sunset].map((value) => (value ? new Date(value).getTime() : NaN));
+    if (Number.isFinite(rise) && Number.isFinite(set)) return time >= rise && time < set;
+    return localHourOfDay >= 6 && localHourOfDay < 18;
 }
 
 /** " · from HH:00" for a partial first day (the backend drops past hours), else "". */

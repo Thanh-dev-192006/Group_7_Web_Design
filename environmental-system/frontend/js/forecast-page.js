@@ -53,7 +53,10 @@ function showDay(index) {
     views.caption.textContent = `${fmt.longDate(day.date)}${partialDayNote(day, index)}`;
     charts.destroy();
     try {
-        const view = buildDayView(day, index);
+        const view = buildDayView(day, index, {
+            tempMode: charts.temperatureMode(),
+            onTempMode: (mode) => charts.setTemperatureMode(mode),
+        });
         view.root.setAttribute("aria-labelledby", `day-tab-${index}`);
         setState(views.content, "ready");
         views.content.append(view.root);
