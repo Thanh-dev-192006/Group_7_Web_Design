@@ -11,7 +11,7 @@ cùng lúc `app/schemas.py`, file này, và `frontend/mock/*.json` trong một P
 |---|---|
 | Response thành công | `{ "data": ..., "meta": { "generated_at", "count"?, "cached"? } }` |
 | Response lỗi | `{ "error": { "code", "message", "details"? } }` — mọi endpoint, mọi loại lỗi |
-| Thời gian | ISO 8601, luôn là **UTC** (`...Z`). Frontend tự đổi sang giờ VN. `daily[].date` là `YYYY-MM-DD` |
+| Thời gian | ISO 8601, luôn là **UTC** (`...Z`). Frontend tự đổi sang giờ VN. `daily[].date` là `YYYY-MM-DD` theo **ngày địa phương (giờ VN, `forecast_timezone`)** |
 | Giá trị thiếu | `null` (không bao giờ là `0`) |
 | AQI | Backend trả sẵn `aqi_category`, frontend chỉ hiển thị |
 | Đơn vị | °C, %, km/h, mm, µg/m³, độ (hướng gió) |
@@ -144,7 +144,7 @@ Ghi chú:
 - Dữ liệu bắt đầu từ **giờ hiện tại** (UTC, làm tròn xuống giờ). `hours` tối đa 168 = 7 ngày, nên `days` cũng tối đa 7 (Air Quality API của Open-Meteo chỉ dự báo được ~7 ngày).
 - Mọi tổ hợp `hours`/`days` dùng chung một bản cache (15 phút) theo địa điểm.
 - Nếu Air Quality API lỗi hoặc ngắn hơn dự báo thời tiết, các giờ tương ứng có `pm2_5`, `us_aqi`, `aqi_category` là `null` (thời tiết vẫn trả bình thường). `current` cũng vậy.
-- `daily[].date` là ngày theo **UTC**; ngày Việt Nam (UTC+7) bắt đầu lúc 17:00 UTC hôm trước, nên từ 00:00 đến 06:59 giờ VN vẫn thuộc ngày UTC hôm trước; trong khoảng đó thẻ đầu tiên của dự báo ngày là ngày VN của hôm qua.
+- `daily[].date` và các giá trị theo ngày (nhiệt độ cao/thấp, tổng mưa, xác suất mưa tối đa, `weather_code`) là theo **ngày lịch Việt Nam** (`forecast_timezone`, mặc định `Asia/Ho_Chi_Minh`); mọi mốc thời gian (`time`, `observed_at`) vẫn là UTC.
 
 ---
 

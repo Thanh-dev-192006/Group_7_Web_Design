@@ -60,16 +60,28 @@ export function localHour(iso, timeZone) {
     return Number(hourFormatters.get(timeZone).format(new Date(iso)));
 }
 
-// Most severe code of the day = highest WMO code (Open-Meteo's daily convention); falls back to the daily entry.
+// Daily dates are local days, so the daily entry's code wins; otherwise the most severe (highest WMO) hourly code.
 function dayWeatherCode(points, dailyEntry) {
+    if (dailyEntry?.weather_code != null) return dailyEntry.weather_code;
     const codes = numbers(points, "weather_code");
-    if (codes.length) return Math.max(...codes);
-    return dailyEntry?.weather_code ?? null;
+    return codes.length ? Math.max(...codes) : null;
+}
+
+// Daily values come from finer data than the hourly samples, so they win per field when present.
+function daySummary(points, dailyEntry) {
+    const hourly = summarizeDay(points);
+    const pick = (value, fallback) => (value != null && Number.isFinite(Number(value)) ? Number(value) : fallback);
+    return {
+        high: pick(dailyEntry?.temperature_max_c, hourly.high),
+        low: pick(dailyEntry?.temperature_min_c, hourly.low),
+        rainChanceMax: pick(dailyEntry?.precipitation_probability_max_pct, hourly.rainChanceMax),
+        precipitationTotal: pick(dailyEntry?.precipitation_sum_mm, hourly.precipitationTotal),
+    };
 }
 
 /**
  * Up to `maxDays` local days (in order, empty days skipped):
- * { date, points, summary, weatherCode, startHour } where startHour is the local hour of the first point.
+ * { date, points, summary, weatherCode, startHour } where summary prefers the daily entry, and startHour is the local hour of the first point.
  */
 export function buildDays(hourly, daily, timeZone, maxDays = 7) {
     const dailyByDate = new Map((Array.isArray(daily) ? daily : []).map((entry) => [entry.date, entry]));
@@ -79,7 +91,7 @@ export function buildDays(hourly, daily, timeZone, maxDays = 7) {
         .map(([date, points]) => ({
             date,
             points,
-            summary: summarizeDay(points),
+            summary: daySummary(points, dailyByDate.get(date)),
             weatherCode: dayWeatherCode(points, dailyByDate.get(date)),
             startHour: localHour(points[0].time, timeZone),
         }));

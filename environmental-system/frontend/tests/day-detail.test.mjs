@@ -58,13 +58,14 @@ test("buildDays: 168 hours from 03:00 VN give 7 non-empty local days", () => {
     assert.equal(days[1].startHour, 0);
 });
 
-test("buildDays: weatherCode is the max hourly code, else the daily entry, else null", () => {
+test("buildDays: weatherCode prefers the daily entry, else the max hourly code, else null", () => {
     const codes = [1, null, 61, 3];
     const points = hours("2026-11-04T17:00:00Z", 4, (i) => ({ weather_code: codes[i] }));
     const empty = hours("2026-11-05T17:00:00Z", 2, () => ({ weather_code: null }));
-    const daily = [{ date: "2026-11-06", weather_code: 45 }];
+    const daily = [{ date: "2026-11-05", weather_code: 3 }, { date: "2026-11-06", weather_code: 45 }];
     const days = buildDays([...points, ...empty], daily, TZ);
-    assert.equal(days[0].weatherCode, 61);
+    assert.equal(days[0].weatherCode, 3);
+    assert.equal(buildDays(points, [], TZ)[0].weatherCode, 61);
     assert.equal(days[1].date, "2026-11-06");
     assert.equal(days[1].weatherCode, 45);
     assert.equal(buildDays(empty, [], TZ)[0].weatherCode, null);
@@ -86,4 +87,20 @@ test("pickDayIndex selects the matching date, else 0", () => {
     assert.equal(pickDayIndex(days, "2026-11-06"), 1);
     assert.equal(pickDayIndex(days, "2026-12-01"), 0);
     assert.equal(pickDayIndex([], "2026-11-06"), 0);
+});
+
+test("buildDays: daily entry values win for the summary, each field falls back independently", () => {
+    const points = hours("2026-11-04T17:00:00Z", 2, (i) => ({
+        temperature_c: 22 + i * 6, precipitation_probability_pct: 10, precipitation_mm: 0.5,
+    }));
+    const full = { date: "2026-11-05", temperature_max_c: 29, temperature_min_c: 21, precipitation_probability_max_pct: 40, precipitation_sum_mm: 3.2 };
+    assert.deepEqual(buildDays(points, [full], TZ)[0].summary,
+        { high: 29, low: 21, rainChanceMax: 40, precipitationTotal: 3.2 });
+
+    const partial = { date: "2026-11-05", temperature_max_c: null, temperature_min_c: 21, precipitation_probability_max_pct: null, precipitation_sum_mm: 0 };
+    assert.deepEqual(buildDays(points, [partial], TZ)[0].summary,
+        { high: 28, low: 21, rainChanceMax: 10, precipitationTotal: 0 });
+
+    assert.deepEqual(buildDays(points, [], TZ)[0].summary,
+        { high: 28, low: 22, rainChanceMax: 10, precipitationTotal: 1 });
 });

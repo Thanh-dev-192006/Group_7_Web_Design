@@ -213,3 +213,52 @@ def test_cached_forecast_hourly_starts_at_serve_time_hour():
     assert len(calls) == 2               # no extra HTTP call
     assert second.hourly[0].time == datetime(2026, 10, 28, 14, 0, tzinfo=timezone.utc)
     assert len(second.hourly) == 168
+
+
+def local_forecast_payload() -> dict:
+    """Forecast in Asia/Ho_Chi_Minh: naive local times plus utc_offset_seconds=25200."""
+    payload = forecast_payload()
+    payload["utc_offset_seconds"] = 25200
+    payload["current"]["time"] = "2026-10-28T21:30"
+    return payload
+
+
+def test_local_forecast_times_are_converted_to_utc():
+    payload = local_forecast_payload()
+    payload["hourly"]["time"][0] = "2026-11-05T07:00"
+    service = make_service(ok_handler(forecast=payload))
+
+    current, _ = service.current(LOCATION)
+    assert current.observed_at == datetime(2026, 10, 28, 14, 30, tzinfo=timezone.utc)
+
+    full = service._build_forecast(LOCATION)
+    assert full.hourly[0].time == datetime(2026, 11, 5, 0, 0, tzinfo=timezone.utc)
+    assert full.hourly[1].time == datetime(2026, 10, 27, 18, 0, tzinfo=timezone.utc)   # local 01:00 on the 28th
+    assert full.daily[0].date.isoformat() == "2026-10-28"                             # daily dates stay as sent
+
+
+def test_air_quality_still_joins_by_utc_time_after_conversion():
+    payload = local_forecast_payload()
+    # Local 2026-10-28T07:00 == 2026-10-28T00:00Z, the first air-quality hour.
+    air = air_payload()
+    air["hourly"]["us_aqi"] = [100 + i for i in range(168)]
+    service = make_service(ok_handler(forecast=payload, air=air))
+
+    full = service._build_forecast(LOCATION)
+    by_time = {p.time: p for p in full.hourly}
+    assert by_time[datetime(2026, 10, 28, 0, 0, tzinfo=timezone.utc)].us_aqi == 100
+    assert by_time[datetime(2026, 10, 28, 5, 0, tzinfo=timezone.utc)].us_aqi == 105
+    assert by_time[datetime(2026, 10, 27, 18, 0, tzinfo=timezone.utc)].us_aqi is None   # before the air-quality range
+
+
+def test_forecast_requests_local_timezone_and_air_quality_gmt():
+    params = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        kind = "air" if request.url.host.startswith("air-quality") else "forecast"
+        params[kind] = dict(request.url.params)
+        return ok_handler()(request)
+
+    make_service(handler).forecast(LOCATION, hours=48, days=7)
+    assert params["forecast"]["timezone"] == "Asia/Ho_Chi_Minh"
+    assert params["air"]["timezone"] == "GMT"

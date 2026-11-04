@@ -1,7 +1,8 @@
 """Open-Meteo HTTP client; returns raw JSON (mapping to schemas is in app/services/weather.py).
 
 - No API key. Docs: https://open-meteo.com/en/docs and /en/docs/air-quality-api
-- Always `timezone=GMT`, so times are UTC without tz; `UTCDatetime` attaches it on serialize.
+- Air quality uses `timezone=GMT` (naive UTC times). The forecast uses `settings.forecast_timezone` so daily
+  values are local calendar days; its times are local and come with `utc_offset_seconds` (converted in weather.py).
 - Network error/timeout -> UpstreamUnavailable (503); HTTP error/bad JSON -> UpstreamError (502).
 """
 import logging
@@ -55,7 +56,7 @@ class OpenMeteoClient:
             "hourly": ",".join(FORECAST_HOURLY_VARS),
             "daily": ",".join(FORECAST_DAILY_VARS),
             "forecast_days": forecast_days,
-            "timezone": "GMT",
+            "timezone": settings.forecast_timezone,
             "wind_speed_unit": "kmh",
         })
 

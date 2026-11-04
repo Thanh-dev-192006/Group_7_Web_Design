@@ -10,7 +10,7 @@ const dayFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "sho
 const longDateFmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: "UTC", weekday: "long", day: "numeric", month: "long", year: "numeric",
 });
-// daily `date` is "YYYY-MM-DD", so format in UTC to avoid a day shift
+// day `date` is "YYYY-MM-DD" (no time), so format in UTC to avoid a day shift
 const atUtcMidnight = (isoDate) => new Date(`${isoDate}T00:00:00Z`);
 
 let state = null;   // set while the sheet is open
