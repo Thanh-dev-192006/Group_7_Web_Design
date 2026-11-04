@@ -81,7 +81,9 @@
 .day-sheet__desc { font-weight: 600; }
 
 @media (min-width: 800px) {
-    .day-sheet { max-width: 520px; }
+    .day-sheet { max-width: 760px; padding: .75rem 1.75rem 1.75rem; }
+    .day-sheet .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .day-sheet .chart { height: 320px; }
 }
 
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
