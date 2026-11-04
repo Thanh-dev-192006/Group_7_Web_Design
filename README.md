@@ -107,6 +107,8 @@ The SQLite database (`weather.db`) and the 15 default locations are created auto
 
 ## Testing
 
+Lighthouse mobile/desktop scores, screenshots, original reports and measurement limitations are documented in [section 4.1](environmental-system/docs/Lighthouse_Results.md). Both measured runs encountered weather API HTTP 502 responses; the scores describe that observed error state.
+
 Run from `environmental-system` with the virtual environment active. The backend and frontend suites need no network access.
 
 ```bash
