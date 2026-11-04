@@ -1,0 +1,89 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { buildDays, groupByLocalDate, localDateKey, pickDayIndex, summarizeDay } from "../js/day-detail.js";
+
+const TZ = "Asia/Ho_Chi_Minh";
+const point = (time, temperature_c = null, chance = null, mm = null) => ({
+    time, temperature_c, precipitation_probability_pct: chance, precipitation_mm: mm,
+});
+
+test("UTC evening belongs to the next local day (UTC+7)", () => {
+    assert.equal(localDateKey("2026-11-05T16:59:00Z", TZ), "2026-11-05");
+    assert.equal(localDateKey("2026-11-05T17:00:00Z", TZ), "2026-11-06");
+});
+
+test("groupByLocalDate splits across the UTC boundary and keeps order", () => {
+    const groups = groupByLocalDate([
+        point("2026-11-05T15:00:00Z"), point("2026-11-05T17:00:00Z"), point("2026-11-06T02:00:00Z"),
+    ], TZ);
+    assert.deepEqual([...groups.keys()], ["2026-11-05", "2026-11-06"]);
+    assert.equal(groups.get("2026-11-05").length, 1);
+    assert.equal(groups.get("2026-11-06").length, 2);
+});
+
+test("groupByLocalDate ignores invalid input", () => {
+    assert.equal(groupByLocalDate(null, TZ).size, 0);
+    assert.equal(groupByLocalDate([{ time: "nope" }, null], TZ).size, 0);
+});
+
+test("summarizeDay computes high/low, max chance and total precipitation", () => {
+    const summary = summarizeDay([point("a", 25, 10, 0.5), point("b", 31, 70, 1.25), point("c", 22, 40, 0)]);
+    assert.deepEqual(summary, { high: 31, low: 22, rainChanceMax: 70, precipitationTotal: 1.75 });
+});
+
+test("summarizeDay skips nulls and returns null (not 0) when nothing is valid", () => {
+    assert.deepEqual(summarizeDay([point("a", null, 20, null), point("b", 28, null, 2)]),
+        { high: 28, low: 28, rainChanceMax: 20, precipitationTotal: 2 });
+    assert.deepEqual(summarizeDay([point("a")]),
+        { high: null, low: null, rainChanceMax: null, precipitationTotal: null });
+});
+
+test("summarizeDay handles empty input", () => {
+    const empty = { high: null, low: null, rainChanceMax: null, precipitationTotal: null };
+    assert.deepEqual(summarizeDay([]), empty);
+    assert.deepEqual(summarizeDay(undefined), empty);
+});
+
+const hours = (startIso, count, extra = () => ({})) => Array.from({ length: count }, (_, i) => ({
+    time: new Date(Date.parse(startIso) + i * 3600e3).toISOString(),
+    temperature_c: 25, precipitation_probability_pct: 0, precipitation_mm: 0, weather_code: 0, ...extra(i),
+}));
+
+test("buildDays: 168 hours from 03:00 VN give 7 non-empty local days", () => {
+    const days = buildDays(hours("2026-11-04T20:00:00Z", 168), [], TZ);
+    assert.equal(days.length, 7);
+    assert.ok(days.every((day) => day.points.length >= 1));
+    assert.equal(days[0].date, "2026-11-05");
+    assert.equal(days[0].startHour, 3);
+    assert.equal(days[1].startHour, 0);
+});
+
+test("buildDays: weatherCode is the max hourly code, else the daily entry, else null", () => {
+    const codes = [1, null, 61, 3];
+    const points = hours("2026-11-04T17:00:00Z", 4, (i) => ({ weather_code: codes[i] }));
+    const empty = hours("2026-11-05T17:00:00Z", 2, () => ({ weather_code: null }));
+    const daily = [{ date: "2026-11-06", weather_code: 45 }];
+    const days = buildDays([...points, ...empty], daily, TZ);
+    assert.equal(days[0].weatherCode, 61);
+    assert.equal(days[1].date, "2026-11-06");
+    assert.equal(days[1].weatherCode, 45);
+    assert.equal(buildDays(empty, [], TZ)[0].weatherCode, null);
+});
+
+test("buildDays: summary comes from the day's own points; empty input gives no days", () => {
+    const days = buildDays(hours("2026-11-04T17:00:00Z", 2, (i) => ({ temperature_c: 20 + i })), null, TZ);
+    assert.deepEqual(days[0].summary.high, 21);
+    assert.deepEqual(buildDays([], [], TZ), []);
+    assert.deepEqual(buildDays(undefined, undefined, TZ), []);
+});
+
+test("buildDays respects maxDays", () => {
+    assert.equal(buildDays(hours("2026-11-04T17:00:00Z", 96), [], TZ, 2).length, 2);
+});
+
+test("pickDayIndex selects the matching date, else 0", () => {
+    const days = [{ date: "2026-11-05" }, { date: "2026-11-06" }];
+    assert.equal(pickDayIndex(days, "2026-11-06"), 1);
+    assert.equal(pickDayIndex(days, "2026-12-01"), 0);
+    assert.equal(pickDayIndex([], "2026-11-06"), 0);
+});
