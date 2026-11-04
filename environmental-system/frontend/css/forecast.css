@@ -1,8 +1,5 @@
 /* Hourly chart, 7-day cards and weather icons. */
-:root { --chart-rain: rgb(31 95 191 / 28%); }   /* --primary at 28%; read via getComputedStyle for Chart.js */
-@media (prefers-color-scheme: dark) {
-    :root { --chart-rain: rgb(110 160 255 / 45%); }
-}
+:root { --chart-rain: rgb(110 160 255 / 45%); }   /* --primary at 45%; read via getComputedStyle for Chart.js */
 
 .chart {
     position: relative;
