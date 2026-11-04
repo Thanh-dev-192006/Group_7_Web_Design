@@ -2,7 +2,7 @@
 
 A web dashboard for current weather, forecasts and air quality (US EPA AQI) in 15 cities across Vietnam. All data comes from [Open-Meteo](https://open-meteo.com/); the project does not train its own models.
 
-Live demo: _TODO: Render URL_
+Live demo: https://group-7-web-design-02.onrender.com/
 
 ## Features
 
