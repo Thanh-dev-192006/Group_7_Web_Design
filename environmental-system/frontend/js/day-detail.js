@@ -101,3 +101,8 @@ export function buildDays(hourly, daily, timeZone, maxDays = 7) {
 export function pickDayIndex(days, date) {
     return Math.max(0, days.findIndex((day) => day.date === date));
 }
+
+/** " · from HH:00" for a partial first day (the backend drops past hours), else "". */
+export function partialDayNote(day, index) {
+    return index === 0 && day.startHour > 0 ? ` · from ${String(day.startHour).padStart(2, "0")}:00` : "";
+}

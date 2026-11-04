@@ -1,0 +1,74 @@
+/* forecast.html: single centred column. Colours come from the tokens in style.css. */
+.fp-top, .fp, .fp-footer {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-inline: 16px;
+}
+.fp-top { display: flex; align-items: center; gap: var(--gap); padding-top: 1.25rem; }
+.fp-top .btn-link { margin-bottom: 0; flex: none; }
+.fp-title { margin: 0; font-size: 1.5rem; overflow-wrap: anywhere; }
+.fp-subtitle { margin: 0; color: var(--text-muted); font-size: .9rem; }
+.fp { display: grid; gap: var(--gap); padding-block: var(--gap); }
+
+.day-bar { display: flex; gap: .25rem; }
+.day-bar__tab {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: .2rem;
+    padding: .35rem 0;
+    font: inherit;
+    color: var(--text-muted);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.day-bar__weekday { font-size: .78rem; font-weight: 600; }
+.day-bar__num {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem; height: 2.25rem;
+    border-radius: 50%;
+    font-weight: 600;
+    color: var(--text);
+}
+.day-bar__tab[aria-selected="true"] .day-bar__num { color: var(--surface); background: var(--primary); }
+.day-bar__tab[aria-selected="true"] .day-bar__weekday { color: var(--text); }
+
+.fp-caption { margin: 0; color: var(--text-muted); }
+.fp-day { display: grid; gap: var(--gap); }
+.fp-card .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fp-weather { display: flex; align-items: center; gap: .6rem; margin-bottom: .75rem; }
+.fp-weather__icon { font-size: 2.25rem; line-height: 1; }
+.fp-weather__desc { font-weight: 600; }
+.fp-text { margin: .75rem 0 0; }
+.fp-total { margin: .6rem 0 0; color: var(--text-muted); }
+
+.fp-note { margin: .6rem 0 0; color: var(--text-muted); font-size: .85rem; }
+
+/* Items are placed by js/components/hour-icons.js on the chart's x scale. */
+.hour-icons {
+    position: relative;
+    height: 3.2rem;
+    margin: 0 0 .25rem;
+    padding: 0;
+    list-style: none;
+}
+.hour-icons__item {
+    position: absolute;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+}
+.hour-icons__item[hidden] { display: none; }
+.hour-icons__time { color: var(--text-muted); font-size: .72rem; }
+.hour-icons__icon { font-size: 1.4rem; line-height: 1.3; }
+
+@media (max-width: 800px) {
+    .fp-card .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

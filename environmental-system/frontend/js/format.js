@@ -6,12 +6,22 @@ const dateTimeFmt = new Intl.DateTimeFormat("en-GB", {
     timeZone: CONFIG.TIMEZONE, hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit",
 });
 const weekdayFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short", day: "2-digit", month: "2-digit" });
+const longDateFmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC", weekday: "long", day: "numeric", month: "long", year: "numeric",
+});
+const dayPartsFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric" });
 
 export const fmt = {
     time: (iso) => timeFmt.format(new Date(iso)),
     dateTime: (iso) => dateTimeFmt.format(new Date(iso)),
     // daily `date` is "YYYY-MM-DD" (no time), so format in UTC to avoid a day shift
     weekday: (isoDate) => weekdayFmt.format(new Date(`${isoDate}T00:00:00Z`)),
+    // "Thursday, 6 November 2026" from a "YYYY-MM-DD" date
+    longDate: (isoDate) => longDateFmt.format(new Date(`${isoDate}T00:00:00Z`)),
+    // { weekday: "Thu", day: "6" } from a "YYYY-MM-DD" date
+    dayParts: (isoDate) => Object.fromEntries(
+        dayPartsFmt.formatToParts(new Date(`${isoDate}T00:00:00Z`)).map((part) => [part.type, part.value]),
+    ),
     /** Number → string with unit; null → "—" (null is never shown as 0) */
     num: (value, unit = "", digits = 0) => (value == null ? "—" : `${Number(value).toFixed(digits)}${unit}`),
 };

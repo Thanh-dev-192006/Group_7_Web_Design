@@ -124,6 +124,21 @@ a { color: var(--primary); }
     .panel--sidebar .map { height: auto; }
 }
 .panel__title { margin: 0 0 .75rem; font-size: 1.05rem; }
+.panel__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem var(--gap); }
+
+/* Small pill-style link */
+.btn-link {
+    display: inline-block;
+    margin-bottom: .75rem;
+    padding: .2rem .7rem;
+    font-size: .85rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 999px;
+}
+.btn-link:hover { background: var(--bg); }
 
 .field { display: grid; gap: .35rem; }
 .field__label { font-size: .85rem; color: var(--text-muted); }

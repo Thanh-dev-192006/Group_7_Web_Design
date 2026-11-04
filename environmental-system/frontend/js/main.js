@@ -3,13 +3,13 @@
 import { api } from "./api.js";
 import { CONFIG } from "./config.js";
 import { renderCurrent } from "./components/current-card.js";
-import { closeDaySheet, openDaySheet } from "./components/day-sheet.js";
 import { renderDaily } from "./components/daily-list.js";
 import { destroyHourlyChart, renderHourly } from "./components/hourly-chart.js";
 import { renderLocationPicker } from "./components/location-picker.js";
 import { createMap } from "./components/map.js";
 import { fmt } from "./format.js";
 import { pickInitialLocation, readStoredId, storeId } from "./location-memory.js";
+import { pageUrl } from "./page-links.js";
 import { errorMessage, setState } from "./ui.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -19,6 +19,7 @@ const views = {
     current: $("#current"),
     hourly: $("#hourly"),
     daily: $("#daily"),
+    dailyMore: $("#daily-more"),
     updatedAt: $("#updated-at"),
 };
 
@@ -37,8 +38,6 @@ const retryInit = {
 let mapView = null;
 let requestSeq = 0;   // ignore stale responses when the user switches location quickly
 let selectedLocationId = null;
-let locationsById = new Map();
-let latestForecast = null;   // { hourly, daily } of the selected location, used by the day sheet
 let currentRefreshPending = false;
 let markersRefreshPending = false;
 
@@ -91,16 +90,8 @@ function rememberLocation(locationId) {
     }
 }
 
-function openDay(day, trigger) {
-    if (!latestForecast) return;
-    openDaySheet({
-        locationName: locationsById.get(selectedLocationId)?.name,
-        daily: latestForecast.daily,
-        hourly: latestForecast.hourly,
-        date: day.date,
-        trigger,
-    });
-}
+// Link to the detail page for the selected location (and a day, when given); keeps ?mock=1.
+const detailUrl = (day) => pageUrl("forecast.html", { city: selectedLocationId, day, mock: CONFIG.USE_MOCK });
 
 async function selectLocation(locationId) {
     const seq = ++requestSeq;
@@ -110,8 +101,7 @@ async function selectLocation(locationId) {
     views.select.value = String(locationId);
     mapView?.select(locationId);
     destroyHourlyChart();
-    closeDaySheet();   // simplest correct option: a sheet for the previous location must not stay open
-    latestForecast = null;
+    views.dailyMore.href = detailUrl();
     for (const view of [views.current, views.hourly, views.daily]) setState(view, "loading");
 
     // Two independent requests: one failing must not break the other.
@@ -138,9 +128,9 @@ async function selectLocation(locationId) {
     if (forecast.status === "fulfilled") {
         try {
             const { hourly, daily } = forecast.value.data;
-            latestForecast = { hourly, daily };
-            renderHourly(views.hourly, Array.isArray(hourly) ? hourly.slice(0, CONFIG.CHART_HOURS) : hourly);
-            renderDaily(views.daily, daily, { onSelect: openDay });
+            // Mock forecast.json holds 168 hours whatever is requested: the chart shows the first FORECAST_HOURS.
+            renderHourly(views.hourly, Array.isArray(hourly) ? hourly.slice(0, CONFIG.FORECAST_HOURS) : hourly);
+            renderDaily(views.daily, daily, { hrefFor: (day) => detailUrl(day.date) });
         } catch (renderError) {
             console.error("Failed to render forecast.", renderError);
             destroyHourlyChart();
@@ -179,7 +169,6 @@ async function init() {
         return;
     }
 
-    locationsById = new Map(locations.map((loc) => [loc.id, loc]));
     const initialId = pickInitialLocation(locations, {
         urlCity: new URLSearchParams(window.location.search).get("city"),
         storedId: readStoredId(),

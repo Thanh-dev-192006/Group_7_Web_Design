@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildDays, groupByLocalDate, localDateKey, pickDayIndex, summarizeDay } from "../js/day-detail.js";
+import { buildDays, groupByLocalDate, localDateKey, partialDayNote, pickDayIndex, summarizeDay } from "../js/day-detail.js";
 
 const TZ = "Asia/Ho_Chi_Minh";
 const point = (time, temperature_c = null, chance = null, mm = null) => ({
@@ -103,4 +103,11 @@ test("buildDays: daily entry values win for the summary, each field falls back i
 
     assert.deepEqual(buildDays(points, [], TZ)[0].summary,
         { high: 28, low: 22, rainChanceMax: 10, precipitationTotal: 1 });
+});
+
+test("partialDayNote only applies to a partial first day", () => {
+    assert.equal(partialDayNote({ startHour: 13 }, 0), " · from 13:00");
+    assert.equal(partialDayNote({ startHour: 9 }, 0), " · from 09:00");
+    assert.equal(partialDayNote({ startHour: 0 }, 0), "");
+    assert.equal(partialDayNote({ startHour: 13 }, 1), "");
 });
