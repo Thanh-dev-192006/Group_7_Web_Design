@@ -5,7 +5,7 @@ Backend and frontend of the Group 7 weather and air-quality dashboard for 15 Vie
 - Backend: **FastAPI** + SQLModel + SQLite, with a 15-minute in-memory cache.
 - Frontend: plain HTML/CSS/JS (ES modules) + Leaflet + Chart.js, served by FastAPI from the same origin.
 - Data: [Open-Meteo](https://open-meteo.com/) forecast and air-quality APIs (no API key).
-- API contract: [`docs/API.md`](docs/API.md). Team workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- API contract: [`docs/API.md`](docs/API.md).
 
 ## Setup
 
@@ -61,6 +61,7 @@ On startup the app creates the tables and seeds the 15 locations (idempotent, ma
 ```powershell
 pytest                                       # backend
 node --test frontend/tests/*.test.mjs        # frontend logic (Node's built-in runner)
+
 ```
 
 Backend tests use an in-memory SQLite database and a fake weather service (`tests/conftest.py`). They need no network and do not touch `weather.db`. To check the real Open-Meteo API manually, run `python -m scripts.check_open_meteo` (optionally followed by a location slug such as `ha-noi`).
@@ -84,18 +85,24 @@ environmental-system/
 │       ├── cache.py       # thread-safe TTL cache
 │       └── aqi.py         # AQI category from the US AQI value
 ├── frontend/
-│   ├── index.html
-│   ├── css/               # style.css, map.css, forecast.css
+│   ├── index.html         # dashboard
+│   ├── forecast.html      # per-day forecast page (forecast-page.js)
+│   ├── css/               # style.css, map.css, forecast.css, forecast-page.css
 │   ├── js/                # main.js (orchestration), api.js (only module that calls the API,
 │   │                      #   incl. mock mode and timeout), config.js, rain-alert.js,
-│   │                      #   location-memory.js, health.js, ... and components/
+│   │                      #   location-memory.js, health.js, forecast-page.js, day-detail.js,
+│   │                      #   day-summary-text.js, uv-index.js, page-links.js, ...
+│   │                      #   and components/ (day-bar, day-view, day-charts, hour-icons, ...)
 │   ├── mock/              # sample responses matching the API contract
 │   └── tests/             # node --test unit tests
 ├── tests/                 # backend tests
 ├── collector/             # phase 2 placeholder (not implemented)
 ├── scripts/               # check_open_meteo.py
-├── docs/                  # API.md, issues/, plans/
+├── docs/                  # API.md, Architecture.md, Design_Description.md, ER_Diagram_Explanation.md,
+│                          #   UI_Screenshots.md, test-catalog.md, diagrams/ (Mermaid),
+│                          #   wireframes/ (HTML), test-output/, images/, issues/, plans/
 ├── requirements.txt
+├── requirements-dev.txt   # + pytest-cov (coverage, optional)
 ├── pytest.ini
 └── .env.example
 ```
