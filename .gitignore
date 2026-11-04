@@ -218,3 +218,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 docs/
+
+# Preserve Lighthouse evidence for report section 4.1.
+!environmental-system/docs/
+environmental-system/docs/*
+!environmental-system/docs/Lighthouse_Results.md
+!environmental-system/docs/figures/
+!environmental-system/docs/lighthouse/
