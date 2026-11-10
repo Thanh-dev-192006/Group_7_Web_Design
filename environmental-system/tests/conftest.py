@@ -13,7 +13,7 @@ from app.database import get_session
 from app.main import app
 from app.schemas import CurrentWeather, DailyPoint, Forecast, HourlyPoint
 from app.seed import seed_locations
-from app.services.aqi import category_from_us_aqi
+from app.services.air_quality import AirQuality
 from app.services.cache import TTLCache
 from app.services.weather import WeatherService, get_weather_service
 
@@ -29,6 +29,10 @@ class FakeWeatherService(WeatherService):
         self.calls = 0
         self.fail_for: dict[int | None, Exception] = fail_for or {}
 
+    def _air_quality(self, location):
+        # No air-quality HTTP in router tests; AQI 85 matches the fake current data
+        return AirQuality(current=(None, 85)), False
+
     def _build_current(self, location):
         if location.id in self.fail_for:
             raise self.fail_for[location.id]
@@ -37,11 +41,10 @@ class FakeWeatherService(WeatherService):
         self.calls += 1
         return CurrentWeather(
             location_id=location.id, observed_at=FIXED_TIME,
-            temperature_c=28.5, humidity_pct=70, us_aqi=85,
-            aqi_category=category_from_us_aqi(85),
+            temperature_c=28.5, humidity_pct=70,
         )
 
-    def _build_forecast(self, location):
+    def _build_forecast_weather(self, location):
         if location.id in self.fail_for:
             raise self.fail_for[location.id]
         if None in self.fail_for:

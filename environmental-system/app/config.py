@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent      # environmental-system/
@@ -28,6 +29,12 @@ class Settings(BaseSettings):
 
     # Open-Meteo cache TTL, seconds
     cache_ttl_seconds: int = 900
+
+    # Air quality (CAMS updates every 12-24 h; Open-Meteo rate-limits per IP, so be gentle).
+    air_quality_cache_ttl_seconds: int = Field(3600, gt=0)
+    air_quality_stale_max_seconds: int = Field(21600, gt=0)         # max age of last-good AQ served when upstream fails
+    air_quality_failure_cooldown_seconds: int = Field(300, gt=0)    # no AQ calls at all for this long after a failure
+    air_quality_forecast_days: int = Field(5, ge=1, le=7)                 # CAMS global covers ~5 days
 
     # Parallel workers for /api/current
     overview_max_workers: int = 8

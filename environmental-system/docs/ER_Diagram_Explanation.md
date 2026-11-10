@@ -16,7 +16,7 @@ The SQLite database contains **one implemented table**, `Location`, defined in `
 | `region` | VARCHAR | NOT NULL | `north`, `central` or `south` (used by `?region=` filter) |
 | `lat`, `lon` | FLOAT | NOT NULL | Coordinates sent to Open-Meteo and used for map markers |
 
-**Weather and air-quality data are not stored in the database.** They come from **Open-Meteo, a third-party data provider**, and are kept by `WeatherService` in an in-memory `TTLCache` for 15 minutes (900 s). The cache keys are `("current", location_id)` and `("forecast", location_id)`. The forecast entry holds the full 168-hour / 7-day payload, including the fields added for the forecast page: feels-like temperature, humidity, wind, UV, sunrise/sunset and daily UV max. The new forecast page needed **no schema change**: all its data is derived from the cached forecast.
+**Weather and air-quality data are not stored in the database.** They come from **Open-Meteo, a third-party data provider**, and are kept by `WeatherService` in in-memory `TTLCache`s. The weather part is cached for 15 minutes (900 s) under the keys `("current", location_id)` and `("forecast", location_id)`; air quality has its own cache keyed by `location_id` (1 hour) and is merged when responding. The forecast entry holds the full 168-hour / 7-day payload, including the fields added for the forecast page: feels-like temperature, humidity, wind, UV, sunrise/sunset and daily UV max. The new forecast page needed **no schema change**: all its data is derived from the cached forecast.
 
 **Why this design.**
 - Weather values change every hour.

@@ -33,6 +33,10 @@ Values are read from environment variables or `.env` (names are case-insensitive
 |---|---|---|
 | `DATABASE_URL` | `sqlite:///<project>/weather.db` | SQLAlchemy URL of the database. By default a SQLite file next to the code. |
 | `CACHE_TTL_SECONDS` | `900` | Lifetime of cached Open-Meteo results, in seconds. |
+| `AIR_QUALITY_CACHE_TTL_SECONDS` | `3600` | Lifetime of cached air-quality data per location (shared by current and forecast), in seconds. |
+| `AIR_QUALITY_STALE_MAX_SECONDS` | `21600` | Maximum age of last-good air-quality data that is still served when Open-Meteo fails. |
+| `AIR_QUALITY_FAILURE_COOLDOWN_SECONDS` | `300` | After an air-quality failure (e.g. 429), no air-quality requests are made for this long (all locations). |
+| `AIR_QUALITY_FORECAST_DAYS` | `5` | Days requested from the air-quality API (CAMS covers about 5 days). |
 | `HTTP_TIMEOUT_SECONDS` | `10` | Timeout of each request to Open-Meteo, in seconds. |
 | `LOG_LEVEL` | `INFO` | Python logging level. |
 | `CORS_ORIGINS` | `[]` | JSON list of allowed origins, e.g. `["http://localhost:5500","http://127.0.0.1:5500"]`. Only needed when the frontend is served from another port (such as VS Code Live Server); the default same-origin setup does not need it. Only `GET` is allowed. |
@@ -119,8 +123,8 @@ backend through REST API endpoints (/api/...).
 
 The FastAPI backend routes incoming requests to WeatherService,
 which handles business logic and retrieves weather and air quality
-data. WeatherService uses an in-memory TTLCache with a 15-minute
-expiration time to reduce repeated external API requests.
+data. WeatherService uses in-memory TTLCaches (15 minutes for weather,
+1 hour for air quality) to reduce repeated external API requests.
 
 When cached data is unavailable or expired, WeatherService
 retrieves forecast and air quality data from Open-Meteo, a
@@ -150,14 +154,17 @@ All endpoints are `GET`. Successful responses are `{ "data": ..., "meta": ... }`
 
 1. The router validates the request and resolves the location from SQLite (unknown id -> 404).
 2. `WeatherService` (`app/services/weather.py`) looks in the in-memory `TTLCache`. On a miss it calls the Open-Meteo forecast API and air-quality API and maps the result to the project's schemas.
-3. The cache key is per location and kind (`current` or `forecast`), with a TTL of `CACHE_TTL_SECONDS` (15 minutes). The cache lives in the process, so each uvicorn worker has its own. A forecast-API failure stores nothing; an air-quality failure still caches the result, with null AQI fields, for the TTL.
-4. `meta.cached` tells the client whether the response came from the cache.
+3. The cache key is per location and kind (`current` or `forecast`), with a TTL of `CACHE_TTL_SECONDS` (15 minutes); it holds only the weather part. Air quality is cached separately per location (`AIR_QUALITY_CACHE_TTL_SECONDS`, 1 hour) and merged when responding, so current and forecast share one air-quality request. The caches live in the process, so each uvicorn worker has its own. A forecast-API failure stores nothing; an air-quality failure is never cached either: it starts a cooldown (`AIR_QUALITY_FAILURE_COOLDOWN_SECONDS`) during which no air-quality request is made, and the last good air-quality data (up to `AIR_QUALITY_STALE_MAX_SECONDS` old) is served instead, or null AQI fields if there is none.
+4. `meta.cached` is true only when no request to Open-Meteo was made: weather came from the cache and air quality came from its cache, last-good data or a cooldown skip.
 
 Rules worth knowing:
 
 - **One forecast per location is cached**, always covering the maximum range (7 days / 168 hours). `hours` (1-168, default 48) and `days` (1-7, default 7) only trim the cached copy when responding, so every parameter combination shares one cache entry.
 - **Hourly data is filtered at serve time:** only points at or after the current UTC hour are returned, so an older cached forecast does not start in the past.
-- **AQI is optional.** If the air-quality API fails, weather is still returned and all AQI fields (`pm2_5`, `us_aqi`, `aqi_category`) are `null`. The same happens for hours beyond the range of the air-quality data. If the weather API fails, the endpoint returns 502/503.
+- **AQI is optional.** If the air-quality API fails (and no recent last-good data exists), weather is still returned and all AQI fields (`pm2_5`, `us_aqi`, `aqi_category`) are `null`. The same happens for hours beyond the range of the air-quality data. If the weather API fails, the endpoint returns 502/503.
+- **Any air-quality failure, even a single timeout, pauses air-quality requests for all cities for `AIR_QUALITY_FAILURE_COOLDOWN_SECONDS`** (Open-Meteo limits per IP). The cooldown is per process. A 4xx other than 429 is logged as an error and only backs off that one location for the same duration.
+- **Current AQI** is the hourly air-quality value for the current UTC hour; the payload's `current` block is only a fallback when that hour is missing and the data is fresh.
+- The `WeatherService` singleton (and so its caches) is created once per process, guarded by a lock against concurrent first requests.
 - **Missing values are `null`**, never `0`. Air-quality and weather hours are joined by timestamp, not by index.
 - **Datetimes are UTC; daily values are local days.** The forecast is requested with `timezone=FORECAST_TIMEZONE` (default `Asia/Ho_Chi_Minh`), so `daily[].date`, min/max and sums are Vietnam calendar days; hourly and current times are converted back to UTC using `utc_offset_seconds`. Air quality is requested in GMT. The frontend converts times to Vietnam time for display.
 - **AQI categories are decided by the backend** (`app/services/aqi.py`, US EPA scale from the `us_aqi` value). The frontend only displays them.
