@@ -38,6 +38,10 @@ class UpstreamError(AppError):
     status_code = 502
     code = "UPSTREAM_ERROR"
 
+    def __init__(self, message: str, *, details: list[dict] | None = None, upstream_status: int | None = None):
+        super().__init__(message, details=details)
+        self.upstream_status = upstream_status      # HTTP status Open-Meteo returned, if any (ours stays 502)
+
 
 class UpstreamUnavailable(AppError):
     """Open-Meteo unreachable or timed out."""

@@ -46,7 +46,9 @@ class OpenMeteoClient:
             raise UpstreamUnavailable("Weather data source is unavailable") from exc
         except httpx.HTTPStatusError as exc:
             logger.warning("Open-Meteo HTTP %s: %s", exc.response.status_code, exc.response.text[:200])
-            raise UpstreamError("Weather data source returned an error") from exc
+            raise UpstreamError(
+                "Weather data source returned an error", upstream_status=exc.response.status_code,
+            ) from exc
         except (httpx.HTTPError, ValueError) as exc:   # ValueError: invalid JSON
             logger.warning("Open-Meteo bad response: %s", exc)
             raise UpstreamError("Weather data source returned an invalid response") from exc

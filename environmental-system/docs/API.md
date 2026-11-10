@@ -53,7 +53,7 @@ Một địa điểm. Lỗi: `404 LOCATION_NOT_FOUND`, `400 VALIDATION_ERROR` (i
 
 Tóm tắt thời tiết + AQI của **tất cả** 15 địa điểm trong một lần gọi (dùng để tô màu marker bản đồ ngay khi tải trang).
 
-Cache 15 phút (`meta.cached = true` nếu toàn bộ kết quả lấy từ cache).
+Thời tiết được cache 15 phút, AQI cache riêng 1 giờ (xem README). `meta.cached = true` chỉ khi toàn bộ kết quả không phải gọi Open-Meteo lần nào (kể cả AQI).
 
 > **Lưu ý:** Địa điểm nào gặp lỗi từ nguồn dữ liệu (upstream) sẽ tự động bị bỏ qua và ghi cảnh báo log hệ thống, không làm hỏng toàn bộ danh sách trả về. Nếu **tất cả** địa điểm đều lỗi, endpoint trả lỗi 502/503 theo chuẩn chung.
 
@@ -91,7 +91,7 @@ Cache 15 phút (`meta.cached = true` nếu toàn bộ kết quả lấy từ cac
 
 ### `GET /api/locations/{id}/current`
 
-Thời tiết + AQI hiện tại của một địa điểm. Cache 15 phút (`meta.cached = true` nếu lấy từ cache).
+Thời tiết + AQI hiện tại của một địa điểm. Thời tiết cache 15 phút, AQI cache riêng 1 giờ. `meta.cached = true` chỉ khi không có request nào tới Open-Meteo (cả thời tiết lẫn AQI).
 
 ```json
 {
@@ -155,7 +155,7 @@ Trường bổ sung (đều có thể `null`):
 
 Ghi chú:
 - Dữ liệu bắt đầu từ **giờ hiện tại** (UTC, làm tròn xuống giờ). `hours` tối đa 168 = 7 ngày, nên `days` cũng tối đa 7 (Air Quality API của Open-Meteo chỉ dự báo được ~7 ngày).
-- Mọi tổ hợp `hours`/`days` dùng chung một bản cache (15 phút) theo địa điểm.
+- Mọi tổ hợp `hours`/`days` dùng chung một bản cache thời tiết (15 phút) theo địa điểm; AQI cache riêng (1 giờ) và được ghép khi trả về. Nếu AQI lỗi (ví dụ 429), server tạm ngừng gọi AQI vài phút và dùng dữ liệu AQI tốt gần nhất (tối đa 6 giờ), nếu không có thì các trường AQI là `null`.
 - Nếu Air Quality API lỗi hoặc ngắn hơn dự báo thời tiết, các giờ tương ứng có `pm2_5`, `us_aqi`, `aqi_category` là `null` (thời tiết vẫn trả bình thường). `current` cũng vậy.
 - `daily[].date` và các giá trị theo ngày (nhiệt độ cao/thấp, tổng mưa, xác suất mưa tối đa, `weather_code`) là theo **ngày lịch Việt Nam** (`forecast_timezone`, mặc định `Asia/Ho_Chi_Minh`); mọi mốc thời gian (`time`, `observed_at`) vẫn là UTC.
 
