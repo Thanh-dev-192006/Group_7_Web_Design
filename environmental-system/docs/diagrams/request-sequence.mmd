@@ -1,0 +1,46 @@
+%% Request sequence for report section 2.3 (Figure 3b): GET /api/locations/{id}/current
+%% Render: see docs/Architecture.md (config is in the init line; no external config file needed).
+%% Verified against app/routers/deps.py, app/routers/weather.py and app/services/weather.py.
+%% Service state changes (last-good, cooldown) are notes next to WeatherService. Last-good air quality is service state (WeatherService._aq_last_good), not part of the TTL cache.
+%%{init: {"theme": "neutral", "themeVariables": {"noteBkgColor": "#f4f4f4", "noteTextColor": "#222222", "noteBorderColor": "#888888"}, "sequence": {"actorMargin": 4, "messageMargin": 24, "boxMargin": 6, "noteMargin": 8, "mirrorActors": false, "wrap": false, "width": 92, "height": 64, "diagramMarginX": 6, "diagramMarginY": 6, "useMaxWidth": false}}}%%
+sequenceDiagram
+    participant B as Browser<br/>(api.js)
+    participant R as Router
+    participant D as SQLite
+    participant S as Weather<br/>Service
+    participant C as Cache
+    participant O as Open-Meteo
+
+    B->>R: GET /current
+    R->>D: find location
+    D-->>R: Location or none
+    alt not found
+        R-->>B: 404<br/>LOCATION_NOT_FOUND
+    else found
+        R->>S: current(location)
+        alt weather cached
+            S->>C: get weather (hit)
+        else miss
+            S->>O: Forecast API (current)
+            O-->>S: JSON
+            S->>C: store 15 min
+        end
+        Note over S,O: Air quality: per-location lock<br/>(single-flight)
+        alt AQ cached
+            S->>C: get AQ (hit)
+        else cooldown active
+            Note right of S: last-good AQ,<br/>6 h max
+        else miss
+            S->>O: Air Quality API
+            alt 200 OK
+                O-->>S: JSON
+                S->>C: store 1 h
+                Note right of S: keep as<br/>last-good
+            else 429 / 5xx / timeout<br/>(4xx: this city only)
+                O-->>S: error
+                Note right of S: 5 min cooldown,<br/>use last-good
+            end
+        end
+        S-->>R: merged CurrentWeather
+        R-->>B: 200 {data, meta.cached}
+    end

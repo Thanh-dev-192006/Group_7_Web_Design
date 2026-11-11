@@ -115,9 +115,13 @@ environmental-system/
 
 ## Architecture
 
-![System Architecture and Request Flow](docs/images/system-architecture.png)
+![Layered system architecture](docs/images/system-architecture.png)
 
-_Figure 1. System Architecture and Request Flow._
+_Figure 1. Layered system architecture._
+
+![Request sequence for GET /api/locations/{id}/current](docs/images/request-sequence.png)
+
+_Figure 2. Request sequence for the current-weather endpoint._
 
 The system follows a client-server architecture. The frontend,
 running in the user's web browser, communicates with the FastAPI

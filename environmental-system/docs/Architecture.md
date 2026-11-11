@@ -1,10 +1,29 @@
 # 2.3 System architecture
 
-**Figure caption:** System architecture of the Weather & AQI dashboard (client, FastAPI server, third-party data source).
+**Figure 3a caption:** Layered architecture of the Weather & AQI dashboard (client, FastAPI server, data and external services).
 
 ![System architecture](images/system-architecture.png)
 
-Source: [`diagrams/system-architecture.mmd`](diagrams/system-architecture.mmd) (Mermaid). To re-render, paste it into <https://mermaid.live> or run `npx -y @mermaid-js/mermaid-cli@11.4.2 -i docs/diagrams/system-architecture.mmd -o docs/images/system-architecture.png -w 900 -s 2 -b white`. The figure is a vertical (top-to-bottom) flowchart so that it stays readable at A4 text width; the theme and font size are set inside the `.mmd` file.
+**Figure 3b caption:** Sequence of `GET /api/locations/{id}/current`, including the caches, the air-quality cooldown and the last-good fallback.
+
+![Request sequence](images/request-sequence.png)
+
+Sources: [`diagrams/system-architecture.html`](diagrams/system-architecture.html) (hand-made HTML/CSS, Figure 3a) and [`diagrams/request-sequence.mmd`](diagrams/request-sequence.mmd) (Mermaid, Figure 3b).
+
+To re-render, from `environmental-system`:
+- Figure 3a: `chrome --headless=new --screenshot=docs/images/system-architecture.png --window-size=1000,1275 --force-device-scale-factor=2 --hide-scrollbars file:///<path>/docs/diagrams/system-architecture.html`
+- Figure 3b: `npx -y @mermaid-js/mermaid-cli@11.4.2 -i docs/diagrams/request-sequence.mmd -o docs/images/request-sequence.png -w 1600 -s 2 -b white`
+
+## Layers (Figure 3a)
+
+- **Client (browser):** `index.html` and `forecast.html`, JavaScript ES modules (`main.js`, `forecast-page.js` and the components), `api.js` as the only HTTP module, and `localStorage` for the last selected city.
+- **Server (FastAPI, one Python process):**
+  - Presentation: `StaticFiles` serves `/`, `/js` and `/css`.
+  - API layer: routers (health, locations, weather, overview) with 6 GET endpoints, input validation and error handlers returning `{data, meta}` or `{error}`.
+  - Service layer: `WeatherService` (merge, UTC conversion, AQI category) and `OpenMeteoClient` (httpx, 10 s timeout).
+  - Data access: SQLModel on SQLite, and in-memory TTL caches (weather 15 minutes, air quality 1 hour).
+- **Data:** SQLite with the `Location` table (15 cities).
+- **External services:** Open-Meteo Forecast API and Air Quality API (called by `OpenMeteoClient`), and the CDNs (Leaflet 1.9.4, Chart.js 4.4.1) and map tiles (OpenStreetMap, CARTO fallback), which the browser loads directly.
 
 ## Client–server model
 
@@ -21,24 +40,22 @@ The application is a classic client–server web app deployed as **one service**
   - `OpenMeteoClient` (httpx, 10 s timeout) is the only component that talks to the outside world.
 - **Third-party data source: Open-Meteo.** No API key is needed. All weather and air-quality values come from Open-Meteo; the application does not measure or model anything itself. Its added value is aggregation, caching, normalisation (UTC datetimes, missing values kept as `null`), AQI classification and visualisation.
 
-## Request flow (numbers match the figure)
+## Request flow (Figure 3b)
 
-1. The browser loads `index.html` or `forecast.html` and the static assets from FastAPI. Leaflet, Chart.js and the map tiles (OpenStreetMap, with CARTO as fallback) come from public CDNs, not from the server.
-2. `api.js` calls an endpoint, for example `GET /api/locations/1/forecast?hours=168&days=7`.
-3. The router looks up the city in SQLite (`deps`); an unknown id returns `404 LOCATION_NOT_FOUND`.
-4. The router asks `WeatherService` for the data.
-5. `WeatherService` checks its caches. Weather: same city, less than 15 minutes old. Air quality: less than 1 hour old, cached separately, one upstream call at a time per location (single-flight). On a hit no call to Open-Meteo is made.
-6. On a miss, `WeatherService` calls `OpenMeteoClient` (httpx, 10 s timeout).
-7. The client sends HTTPS GET requests to Open-Meteo:
-   - **Forecast API, current conditions:** 8 variables. Used by `/current` and `/api/current`.
-   - **Forecast API, hourly and daily:** 16 variables over 8 days, requested in `Asia/Ho_Chi_Minh` so daily values are Vietnam calendar days. Used by `/forecast`.
-   - **Air Quality API:** `pm2_5` and `us_aqi` for 5 days, in GMT.
+The sequence is for `GET /api/locations/{id}/current`; `/forecast` follows the same steps with the forecast variables.
 
-After step 7 the service builds the response and the router returns the `{data, meta}` JSON envelope (or `{error: {code, message}}`); the frontend converts UTC to Vietnam time for display.
+1. The browser's `api.js` sends the request. The router looks up the location in SQLite through a dependency before the service is called; an unknown id returns `404 LOCATION_NOT_FOUND`.
+2. The router calls `WeatherService.current(location)`.
+3. Weather is looked up first. On a miss, `OpenMeteoClient` calls the Forecast API (current variables, `Asia/Ho_Chi_Minh`) and the result is stored for 15 minutes. If the forecast call fails, the API returns 502 or 503 and nothing is stored.
+4. Air quality is handled after weather, in the same request (the two steps run one after the other).
+   - Cache hit (1 hour): the cached data is used.
+   - Cooldown active (global, 5 minutes after a failure, or per location after a 4xx other than 429): no call is made and the last-good data (up to 6 hours old) is used, or empty AQI.
+   - Miss: the Air Quality API is called (`pm2_5`, `us_aqi`, 5 days, GMT). On success the data is stored for 1 hour. On HTTP 429, 5xx, a timeout or an unusable reply, nothing is cached, the cooldown starts and the last-good data is used.
+   - The last-good data and the cooldown are state of `WeatherService` itself, not entries of the TTL cache.
+   - A lock per location makes this single-flight: concurrent requests for the same location wait and reuse the cache.
+5. The service merges weather and air quality (local times converted to UTC with `utc_offset_seconds`, AQI joined by timestamp, AQI category added). The router returns `{data, meta}`, where `meta.cached` is true only when no call to Open-Meteo was made. The frontend converts UTC to Vietnam time for display.
 
-- Local times are converted to UTC with `utc_offset_seconds`, and air quality is joined to weather by timestamp.
-- If the air-quality call fails (HTTP 429, 5xx, timeout or an unusable reply), weather is still returned. A global cooldown of 5 minutes pauses all air-quality calls, and the last good AQI (up to 6 hours old) is served, or `null` AQI fields if there is none. A 4xx other than 429 backs off only that location.
-- If the forecast call fails, the API returns 502 or 503.
+Forecast variables: current conditions use 8 variables; hourly and daily data use 16 variables over 8 days (so daily values are Vietnam calendar days).
 
 ## Design notes and trade-offs
 

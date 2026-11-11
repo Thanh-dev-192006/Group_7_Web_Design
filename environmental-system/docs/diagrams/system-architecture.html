@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<!-- Layered architecture for report section 2.3 (Figure 3a).
+     Render: chrome --headless=new --screenshot=docs/images/system-architecture.png --window-size=1000,<height> --force-device-scale-factor=2 --hide-scrollbars file:///.../system-architecture.html
+     The page is 1000 CSS px wide and every text is >= 21 px, so it prints at >= 10 pt on a 16 cm wide figure.
+     Arrows are drawn by the script at the end from element positions. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>System architecture</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; width: 1000px; background: #fff; color: #222; font: 22px/1.25 Arial, Helvetica, sans-serif; position: relative; }
+  #fig { padding: 20px 60px 8px 20px; position: relative; }
+  .band { display: flex; border: 2px solid #333; border-radius: 10px; background: #f4f4f4; overflow: hidden; }
+  .strip { flex: 0 0 48px; background: #333; color: #fff; font-weight: bold; font-size: 22px; letter-spacing: 1px;
+           writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; display: flex; align-items: center; justify-content: center; white-space: nowrap; }
+  .body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .row { display: flex; gap: 10px; }
+  .box { flex: 1; border: 2px solid #333; border-radius: 8px; background: #fff; padding: 8px 10px; min-width: 0; }
+  .box b { display: block; font-size: 22px; }
+  .box span { display: block; font-size: 21px; color: #444; }
+  .layer { border: 2px solid #888; border-radius: 8px; background: #fff; padding: 8px 10px 10px; }
+  .layer > h3 { margin: 0 0 6px; font-size: 22px; }
+  .layer .box { background: #f4f4f4; border-width: 1.5px; }
+  .group { border: 2px dashed #555; border-radius: 8px; background: #fff; padding: 8px 10px 10px; }
+  .group > h3 { margin: 0 0 6px; font-size: 22px; }
+  .gap { height: 54px; }
+  .cols { display: flex; gap: 40px; align-items: stretch; }
+  #data { flex: 0 0 300px; }
+  #ext { flex: 1; min-width: 0; }
+  #legend { margin-top: 8px; font-size: 21px; color: #444; }
+  svg#arrows { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+  .lbl { position: absolute; background: #fff; font-size: 21px; padding: 0 8px; font-weight: bold; color: #222; }
+</style>
+</head>
+<body>
+<div id="fig">
+
+  <div class="band" id="client">
+    <div class="strip">CLIENT – Browser</div>
+    <div class="body">
+      <div class="row">
+        <div class="box"><b>Pages</b><span>index.html, forecast.html</span></div>
+        <div class="box"><b>localStorage</b><span>last selected city</span></div>
+      </div>
+      <div class="row">
+        <div class="box"><b>JS ES modules</b><span>main.js, forecast-page.js, components</span></div>
+        <div class="box" id="apijs"><b>api.js</b><span>the only HTTP module</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gap" id="gap1"></div>
+
+  <div class="band" id="server">
+    <div class="strip">SERVER – FastAPI (one Python process)</div>
+    <div class="body">
+      <div class="layer" id="l-pres">
+        <h3>Presentation</h3>
+        <div class="row"><div class="box" id="static"><b>StaticFiles</b><span>/, /js, /css</span></div></div>
+      </div>
+      <div class="layer" id="l-api">
+        <h3>API layer</h3>
+        <div class="row">
+          <div class="box" id="routers"><b>Routers</b><span>health, locations, weather, overview: 6 GET endpoints</span></div>
+          <div class="box"><b>Validation, errors</b><span>{data, meta} or {error}</span></div>
+        </div>
+      </div>
+      <div class="layer" id="l-svc">
+        <h3>Service layer</h3>
+        <div class="row">
+          <div class="box" id="wsvc"><b>WeatherService</b><span>merge, UTC conversion, AQI category</span></div>
+          <div class="box" id="omc" style="flex:0 0 250px"><b>OpenMeteoClient</b><span>httpx, 10 s timeout</span></div>
+        </div>
+      </div>
+      <div class="layer" id="l-data">
+        <h3>Data access</h3>
+        <div class="row">
+          <div class="box" id="sqlmodel"><b>SQLModel</b><span>→ SQLite</span></div>
+          <div class="box" id="caches"><b>TTL caches</b><span>in memory: weather 15 min, air quality 1 h</span></div>
+          <div style="flex:0 0 250px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gap" id="gap2"></div>
+
+  <div class="cols">
+    <div class="band" id="data">
+      <div class="strip">DATA</div>
+      <div class="body">
+        <div class="box" id="sqlite"><b>SQLite</b><span>Location table, 15 cities</span></div>
+      </div>
+    </div>
+    <div class="band" id="ext">
+      <div class="strip">EXTERNAL SERVICES</div>
+      <div class="body">
+        <div class="row">
+          <div class="box" id="fc"><b>Open-Meteo Forecast API</b></div>
+          <div class="box" id="aq"><b>Open-Meteo Air Quality API</b></div>
+        </div>
+        <div class="group" id="cdn">
+          <h3>Loaded by the browser</h3>
+          <div class="row">
+            <div class="box"><b>CDNs</b><span>Leaflet 1.9.4, Chart.js 4.4.1</span></div>
+            <div class="box"><b>Map tiles</b><span>OSM, CARTO fallback</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="legend">Solid arrow: call made by our code. Dashed arrow: loaded directly by the browser.</div>
+</div>
+
+<svg id="arrows" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#222"/></marker>
+  </defs>
+</svg>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const rect = id => { const r = $(id).getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top + scrollY, b: r.bottom + scrollY, cx: (r.left + r.right) / 2, cy: (r.top + r.bottom) / 2 + scrollY }; };
+  const svg = $("arrows");
+  function path(d, dashed) {
+    const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    p.setAttribute("d", d); p.setAttribute("fill", "none"); p.setAttribute("stroke", "#222"); p.setAttribute("stroke-width", "3");
+    if (dashed) p.setAttribute("stroke-dasharray", "9 7");
+    p.setAttribute("marker-end", "url(#ah)");
+    svg.appendChild(p);
+  }
+  function label(text, x, y) {
+    const d = document.createElement("div"); d.className = "lbl"; d.textContent = text;
+    document.body.appendChild(d);
+    d.style.left = (x - d.offsetWidth / 2) + "px"; d.style.top = (y - d.offsetHeight / 2) + "px";
+  }
+  const c = rect("client"), s = rect("server"), g1 = rect("gap1");
+  // client -> server
+  path(`M${c.cx},${c.b} L${c.cx},${s.t}`);
+  label("HTTP · JSON · same origin", c.cx, g1.cy);
+  // SQLModel -> SQLite (straight down)
+  const sm = rect("sqlmodel"), sq = rect("sqlite");
+  path(`M${sm.cx},${sm.b + 14} L${sm.cx},${sq.t}`);
+  // OpenMeteoClient -> forecast / air quality APIs
+  const om = rect("omc"), fc = rect("fc"), aq = rect("aq"), mid = s.b + (sq.t - s.b) / 2;
+  const x1 = om.cx - 40, x2 = om.cx + 40;
+  path(`M${x1},${om.b} L${x1},${mid} L${fc.cx},${mid} L${fc.cx},${fc.t}`);
+  path(`M${x2},${om.b} L${x2},${mid + 14} L${aq.cx},${mid + 14} L${aq.cx},${aq.t}`);
+  // browser -> CDNs and tiles (dashed, along the right margin)
+  const cl = $("client").getBoundingClientRect(), cd = rect("cdn"), lane = cl.right + 28;
+  path(`M${cl.right},${c.cy} L${lane},${c.cy} L${lane},${cd.cy} L${cd.r},${cd.cy}`, true);
+  document.title = String(Math.ceil(document.documentElement.scrollHeight));
+</script>
+</body>
+</html>
