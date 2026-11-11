@@ -219,9 +219,5 @@ __marimo__/
 
 docs/
 
-# Preserve Lighthouse evidence for report section 4.1.
+# Track all project docs (report assets, Lighthouse evidence, test output).
 !environmental-system/docs/
-environmental-system/docs/*
-!environmental-system/docs/Lighthouse_Results.md
-!environmental-system/docs/figures/
-!environmental-system/docs/lighthouse/

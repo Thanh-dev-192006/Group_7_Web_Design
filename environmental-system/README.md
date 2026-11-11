@@ -2,7 +2,7 @@
 
 Backend and frontend of the Group 7 weather and air-quality dashboard for 15 Vietnamese cities. For a project overview see the [root README](../README.md).
 
-- Backend: **FastAPI** + SQLModel + SQLite, with a 15-minute in-memory cache.
+- Backend: **FastAPI** + SQLModel + SQLite, with in-memory caches (15 minutes for weather, 1 hour for air quality).
 - Frontend: plain HTML/CSS/JS (ES modules) + Leaflet + Chart.js, served by FastAPI from the same origin.
 - Data: [Open-Meteo](https://open-meteo.com/) forecast and air-quality APIs (no API key).
 - API contract: [`docs/API.md`](docs/API.md).
@@ -38,6 +38,8 @@ Values are read from environment variables or `.env` (names are case-insensitive
 | `AIR_QUALITY_FAILURE_COOLDOWN_SECONDS` | `300` | After an air-quality failure (e.g. 429), no air-quality requests are made for this long (all locations). |
 | `AIR_QUALITY_FORECAST_DAYS` | `5` | Days requested from the air-quality API (CAMS covers about 5 days). |
 | `HTTP_TIMEOUT_SECONDS` | `10` | Timeout of each request to Open-Meteo, in seconds. |
+| `FORECAST_TIMEZONE` | `Asia/Ho_Chi_Minh` | IANA time zone for the forecast's daily aggregation (`daily[].date`, min/max, sums). API datetimes stay UTC. |
+| `OVERVIEW_MAX_WORKERS` | `8` | Parallel workers used by `/api/current` (all cities). |
 | `LOG_LEVEL` | `INFO` | Python logging level. |
 | `CORS_ORIGINS` | `[]` | JSON list of allowed origins, e.g. `["http://localhost:5500","http://127.0.0.1:5500"]`. Only needed when the frontend is served from another port (such as VS Code Live Server); the default same-origin setup does not need it. Only `GET` is allowed. |
 
@@ -180,7 +182,7 @@ Rules worth knowing:
 ## Known limitations
 
 - **The cache is per process.** Each uvicorn worker has its own copy.
-- **No single-flight on a cold cache.** Concurrent requests for the same uncached location each call Open-Meteo.
+- **No single-flight on a cold weather cache.** Concurrent requests for the same uncached location each call the Open-Meteo forecast API. This applies to the weather cache only; air quality is single-flight per location (concurrent requests share one air-quality call).
 
 ## Not implemented yet
 

@@ -1,0 +1,30 @@
+........................................................................ [ 72%]
+............................                                             [100%]
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.9-final-0 _______________
+
+Name                          Stmts   Miss  Cover
+-------------------------------------------------
+app\__init__.py                   0      0   100%
+app\config.py                    27      0   100%
+app\database.py                  26      8    69%
+app\errors.py                    56      2    96%
+app\main.py                      41      5    88%
+app\models.py                     8      0   100%
+app\routers\__init__.py           0      0   100%
+app\routers\deps.py              15      0   100%
+app\routers\health.py            17      3    82%
+app\routers\locations.py         18      0   100%
+app\routers\overview.py          13      0   100%
+app\routers\weather.py           14      0   100%
+app\schemas.py                   99      1    99%
+app\seed.py                      14      4    71%
+app\services\__init__.py          0      0   100%
+app\services\air_quality.py      55      4    93%
+app\services\aqi.py               9      0   100%
+app\services\cache.py            37      2    95%
+app\services\open_meteo.py       35      4    89%
+app\services\weather.py         198      5    97%
+-------------------------------------------------
+TOTAL                           682     38    94%
+100 passed in 2.04s

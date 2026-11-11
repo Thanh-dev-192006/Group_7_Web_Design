@@ -4,7 +4,7 @@
 
 ![ER diagram](images/ER_Diagram_Location.png)
 
-Source: [`diagrams/er-diagram.mmd`](diagrams/er-diagram.mmd) (Mermaid, neutral theme, readable in black and white).
+Source: [`diagrams/er-diagram.mmd`](diagrams/er-diagram.mmd) (Mermaid, neutral theme, readable in black and white). Comments in the figure are abbreviated for print: "required" means NOT NULL, "null" means nullable, "3 regions" means `north`, `central` or `south`, and `LOCATION` in the `location_id` row is the referenced table.
 
 The SQLite database contains **one implemented table**, `Location`, defined in `app/models.py` and seeded with 15 Vietnamese cities by `app/seed.py` at start-up.
 
@@ -28,4 +28,4 @@ The SQLite database contains **one implemented table**, `Location`, defined in `
 - Each process or worker has its own cache.
 - No historical readings are kept, so trends and anomaly detection are not possible yet.
 
-**`Reading` (dashed relationship in the figure) is Phase 2 and not implemented.** Its model is commented out in `app/models.py`. If it is enabled, each `Location` would have zero or more `Reading` rows through `Reading.location_id`, with an index on `(location_id, collected_at)` for history queries. The planned `collector/run.py` only raises "not implemented".
+**`Reading` (shown as "Reading (planned, Phase 2)", dashed relationship in the figure) is Phase 2 and not implemented.** Its model is commented out in `app/models.py`. If it is enabled, each `Location` would have zero or more `Reading` rows through `Reading.location_id`, with an index on `(location_id, collected_at)` for history queries. The planned `collector/run.py` only raises "not implemented".

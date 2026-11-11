@@ -1,8 +1,8 @@
 # Test Case Catalog
 
-This catalog covers the backend suite in `tests/`, the frontend unit suite in `frontend/tests/` plus a manual browser checklist. Each pytest parameterized AQI boundary is listed as its own test case. Results come from the actual runs of 2026-11-04: **71 backend tests passed** and **51 frontend tests passed** (122 automated tests, TC-001 to TC-122); the manual checklist is in the last section. Backend line coverage (pytest-cov, `--cov=app`): **93%** (542 statements, 37 missed).
+This catalog covers the backend suite in `tests/`, the frontend unit suite in `frontend/tests/` plus a manual browser checklist. Each pytest parameterized AQI boundary is listed as its own test case. Results come from the actual runs of 2026-11-11: **100 backend tests passed** and **51 frontend tests passed** (151 automated tests, TC-001 to TC-151); the manual checklist is in the last section. Backend line coverage (pytest-cov, `--cov=app`): **94%** (682 statements, 38 missed).
 
-Raw outputs are in `docs/test-output/` (`backend-pytest.txt`, `frontend-node-test.txt`); the images `docs/images/test_results.png` and `docs/images/frontend_tests.png` show the backend and frontend outputs.
+Raw outputs are in `docs/test-output/` (`backend-pytest.txt`, `frontend-node.txt`, `backend-coverage.txt`); the images `docs/images/test_results.png` and `docs/images/frontend_tests.png` show the backend (with coverage total) and frontend summaries.
 
 How to run (from `environmental-system/`):
 
@@ -21,7 +21,8 @@ pytest --cov=app --cov-report=term                        # backend coverage
 | `test_locations.py` | Locations endpoints: envelope, region filter, 404/400 errors | 6 |
 | `test_overview.py` | `/api/current` all-locations summary: partial/total failures and caching | 4 |
 | `test_weather.py` | Weather endpoints: current/forecast envelope, parameter validation, cache, upstream error mapping (502/503) | 11 |
-| `test_weather_service.py` | Open-Meteo service: mapping, Vietnam-day to UTC conversion, AQI join by time, request parameters, new fields, caching, error mapping | 23 |
+| `test_weather_service.py` | Open-Meteo service: mapping, Vietnam-day to UTC conversion, AQI join by time, request parameters, new fields, caching, error mapping; air-quality cache, single-flight, cooldown, last-good, malformed replies; service singleton | 50 |
+| `test_weather_router_air_quality.py` | Current and forecast routers with air quality: merged AQI and `meta.cached` flag | 2 |
 | `test_pages.py` | Static pages, script and mock JSON served by the app | 5 |
 | `day-detail.test.mjs` | Vietnam-day grouping, day summaries, day building, sunrise/sunset/UV max, daylight | 15 |
 | `day-summary-text.test.mjs` | Day summary sentences, temperature/feels-like extremes, humidity & wind text, peak AQI | 11 |
@@ -31,9 +32,11 @@ pytest --cov=app --cov-report=term                        # backend coverage
 | `rain-alert.test.mjs` | Rain alert logic and banner text | 7 |
 | `ui-errors.test.mjs` | User-facing error messages | 4 |
 | `uv-index.test.mjs` | UV category and peak UV hour | 3 |
-| **Total (automated, TC-001 to TC-122)** | | **122** |
+| **Total (automated, TC-001 to TC-151)** | | **151** |
 
 ## Backend tests (`tests/`)
+
+Test IDs are stable: existing IDs are never renumbered. Tests added later are appended with the next free ID, so the 29 air-quality, cooldown and singleton tests (TC-123 to TC-151) are listed at the end of this backend section, after TC-071.
 
 | ID | Feature | Expected Result | Result |
 |---|---|---|---|
@@ -108,6 +111,35 @@ pytest --cov=app --cov-report=term                        # backend coverage
 | TC-069 | JavaScript served | `GET /js/forecast-page.js` returns HTTP 200 and a JavaScript content type. | PASS |
 | TC-070 | More details link | `index.html` contains the `daily-more` link. | PASS |
 | TC-071 | Mock forecast served | `GET /mock/forecast.json` returns HTTP 200 and 7 daily entries. | PASS |
+| TC-123 | Router: current uses air quality; cached flag | `/current` returns the merged AQI, and `meta.cached` is false while an air-quality call was made and true when none was. | PASS |
+| TC-124 | Router: forecast merges hourly air quality | `/forecast` returns hourly AQI values merged into the hourly weather points. | PASS |
+| TC-125 | Current and forecast share one air-quality call | Requesting current and forecast for one location triggers a single air-quality request. | PASS |
+| TC-126 | Air-quality forecast days configurable | The air-quality request uses `forecast_days` from settings (default 5). | PASS |
+| TC-127 | Air-quality 429 not cached, recovers after cooldown | An HTTP 429 gives null AQI, is not cached, and a new call is made only after the 300 s cooldown. | PASS |
+| TC-128 | Cooldown applies to all locations | After an air-quality failure, no air-quality call is made for any location until the cooldown ends. | PASS |
+| TC-129 | `meta.cached` true when no call was made | During a cooldown the response is flagged as cached, because no upstream call was made. | PASS |
+| TC-130 | Last-good air quality served on failure | After a failure the last good AQI is served until `AIR_QUALITY_STALE_MAX_SECONDS` (6 h) is exceeded. | PASS |
+| TC-131 | Stale air quality expires inside cooldown | Last-good data older than the maximum age is dropped without a new call while the cooldown lasts. | PASS |
+| TC-132 | Air quality refetched after TTL | Air quality is requested again once its 1-hour cache entry has expired. | PASS |
+| TC-133 | Malformed air quality: case 1 of 5 | A malformed air-quality payload counts as a failure and is not cached (case `bad0`). | PASS |
+| TC-134 | Malformed air quality: case 2 of 5 | A malformed air-quality payload counts as a failure and is not cached (case `bad1`). | PASS |
+| TC-135 | Malformed air quality: case 3 of 5 | A malformed air-quality payload counts as a failure and is not cached (case `bad2`). | PASS |
+| TC-136 | Malformed air quality: case 4 of 5 | A malformed air-quality payload counts as a failure and is not cached (case `bad3`). | PASS |
+| TC-137 | Malformed air quality: case 5 of 5 | A malformed air-quality payload counts as a failure and is not cached (case `bad4`). | PASS |
+| TC-138 | Empty air quality keeps last-good: case 1 of 3 | An empty air-quality reply does not overwrite the last good data (case `empty0`). | PASS |
+| TC-139 | Empty air quality keeps last-good: case 2 of 3 | An empty air-quality reply does not overwrite the last good data (case `empty1`). | PASS |
+| TC-140 | Empty air quality keeps last-good: case 3 of 3 | An empty air-quality reply does not overwrite the last good data (case `empty2`). | PASS |
+| TC-141 | Air-quality timeout starts cooldown | A timeout from the air-quality API starts the global cooldown; weather is still returned. | PASS |
+| TC-142 | Non-429 4xx backs off one location only | An air-quality 4xx other than 429 backs off only that location; other locations are still requested. | PASS |
+| TC-143 | Air-quality 5xx starts cooldown | An air-quality 5xx reply starts the global cooldown. | PASS |
+| TC-144 | `current_many` skips air quality during cooldown | The all-cities summary makes no air-quality calls while the cooldown is active. | PASS |
+| TC-145 | Cached weather objects not mutated | Merging air quality never changes the cached weather objects. | PASS |
+| TC-146 | Current AQI from the current hour | Current AQI comes from the hourly value of the current hour, not from the older `current` block. | PASS |
+| TC-147 | Current AQI fallback only when fresh | The `current` block AQI is used as a fallback only when it is fresh. | PASS |
+| TC-148 | Concurrent requests: one air-quality call | Concurrent current and forecast requests for one location make a single air-quality call (single-flight). | PASS |
+| TC-149 | Non-finite air-quality numbers | NaN or infinite air-quality values are treated as missing. | PASS |
+| TC-150 | Hourly AQI null falls back to current block | When the hourly AQI at the current hour is null, the `current` block value is used. | PASS |
+| TC-151 | Service singleton created once under concurrency | `get_weather_service` creates one instance even when called from many threads. | PASS |
 
 ## Frontend tests (`frontend/tests/`)
 

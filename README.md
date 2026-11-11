@@ -31,7 +31,7 @@ At 375px, the weather panels appear above the city picker and map. The seven-day
 
 The forecast page for one day shows the day bar, a summary card and charts for temperature (with hourly weather icons), chance of rain, humidity and wind, UV index and hourly AQI.
 
-See [section 3.2: interface screenshots](environmental-system/docs/UI_Screenshots.md) for all 18 captures, including the map, current/AQI advice, 48-hour chart, seven-day forecast, the forecast page and its cards, rain alert, and error/Retry, all in the fixed dark theme, with captions and reproduction instructions.
+See [section 3.2: interface screenshots](environmental-system/docs/UI_Screenshots.md) for all 18 captures (plus two cropped 375 × 812 mobile versions for print), including the map, current/AQI advice, 48-hour chart, seven-day forecast, the forecast page and its cards, rain alert, and error/Retry, all in the fixed dark theme, with captions and reproduction instructions.
 
 The captures include the geographic basemap and AQI markers. When OpenStreetMap tiles are unavailable, the application uses CARTO Voyager with the project's browser basemap key.
 
@@ -57,14 +57,14 @@ The captures include the geographic basemap and AQI markers. When OpenStreetMap 
 |    GET /api/locations/{id}/forecast                           |
 |    GET /api/current   (summary of all cities, for the map)    |
 |                                                               |
-|  In-memory TTL cache (15 minutes, thread-safe)                |
+|  In-memory TTL caches (weather 15 min, air quality 1 h)       |
 |  SQLite (location metadata for the 15 cities)                 |
 +---------------------------------------------------------------+
                                |
             +------------------+------------------+
             | cache hit                           | cache miss
             v                                     v
-   [ In-memory TTL cache ]              +-----------------------+
+   [ In-memory TTL caches ]             +-----------------------+
                                         |    Open-Meteo APIs    |
                                         |  - Weather forecast   |
                                         |  - Air quality        |
@@ -119,7 +119,7 @@ pytest
 node --test frontend/tests/*.test.mjs
 ```
 
-Latest results: 71 backend and 51 frontend tests passed; a manual browser checklist is also included; see [`docs/test-catalog.md`](environmental-system/docs/test-catalog.md).
+Latest results: 100 backend and 51 frontend tests passed; a manual browser checklist is also included; see [`docs/test-catalog.md`](environmental-system/docs/test-catalog.md).
 
 ## Project structure
 

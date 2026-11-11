@@ -106,6 +106,18 @@ Hourly UV bars are coloured by WHO category (yellow moderate, orange high, red v
 
 Hourly US AQI bars are coloured by AQI category, and the “Peak AQI” line gives the highest value, its category and its time.
 
+## Cropped mobile versions for print
+
+The two full-page mobile captures are 375 × 1836 and 375 × 1549 px, which is too tall for a report page. These are cropped 375 × 812 px versions (a typical phone screen height), taken from the full captures:
+
+![Mobile dashboard, top of page](images/screenshots/ui-mobile-home-top.png)
+
+`ui-mobile-home-top.png`: the first 812 px of `ui-mobile-home.png` (header, current conditions, AQI and health advice).
+
+![Mobile forecast error, cropped](images/screenshots/ui-mobile-error-retry-top.png)
+
+`ui-mobile-error-retry-top.png`: `ui-mobile-error-retry.png` from y = 608 to 1420, so both error panels with their Retry buttons are included. The originals are kept.
+
 ## Error and Retry — desktop
 
 ![Desktop forecast error](images/screenshots/ui-desktop-error-retry.png)

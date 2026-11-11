@@ -1,0 +1,24 @@
+%% ER diagram for report section 2.4 (render: docs/images/ER_Diagram_Location.png)
+%% Only LOCATION is a real SQLite table. Weather/AQI are NOT stored: they live in the in-memory TTL cache.
+%%{init: {"theme": "neutral", "themeVariables": {"fontSize": "26px"}}}%%
+erDiagram
+    direction LR
+    LOCATION {
+        INTEGER id PK "auto-increment"
+        VARCHAR name UK "e.g. Ha Noi"
+        VARCHAR slug UK "indexed"
+        VARCHAR region "3 regions"
+        FLOAT lat "required"
+        FLOAT lon "required"
+    }
+    READING["Reading (planned, Phase 2)"] {
+        INTEGER id PK
+        INTEGER location_id FK "LOCATION"
+        DATETIME collected_at "UTC"
+        FLOAT temperature_c "null"
+        FLOAT humidity_pct "null"
+        FLOAT pm2_5 "null"
+        FLOAT us_aqi "null"
+        BOOLEAN is_anomaly "default 0"
+    }
+    LOCATION ||..o{ READING : "has"
